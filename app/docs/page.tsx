@@ -234,16 +234,55 @@ fc_prod_xxx  → production (full enforcement)`} />
                 <li>Visible text from <Code>&lt;main&gt;</Code> (or <Code>&lt;body&gt;</Code>), truncated to 3 000 chars.</li>
               </ol>
               <P>The auto-captured context is merged with any static <Code>context</Code> option and truncated to 8 000 chars before sending.</P>
-              <CodeBlock filename="runtime-context.js" code={`// Highest priority — set at runtime (cart, user, etc.)
+
+              <H3>Injecting app data at runtime</H3>
+              <P>Set <Code>window.fluxchatContext</Code> once (or update it whenever state changes) so the bot always has access to your live data — user profile, cart, subscription, current record, etc. The widget reads it at send time, not at init.</P>
+              <CodeBlock filename="runtime-context.js" code={`// Basic — string or object, both work
+window.fluxchatContext = "User: Marie, Plan: Pro, Cart: 2 items";
+
+// Recommended — structured object (auto-serialised to JSON)
 window.fluxchatContext = {
-  user: 'Marie',
-  plan: 'Pro',
-  cart: [{ id: 1, qty: 2 }],
+  user: { name: "Marie", email: "marie@example.com", plan: "Pro" },
+  cart: [{ id: 1, name: "T-shirt", qty: 2, price: 29.99 }],
 };
 
-// Or annotate any DOM element
-// <section data-fluxchat="page: checkout">...</section>`} />
-              <Callout>Set <Code>autoContext: false</Code> to rely solely on the static <Code>context</Code> option. Useful when you fully control context injection via <Code>window.fluxchatContext</Code>.</Callout>
+// Merging sections (e.g. set user at root, add billing on billing page)
+window.fluxchatContext = {
+  ...window.fluxchatContext,
+  billing: { plan: "Enterprise", messages_used: 255, messages_limit: 500000 },
+};`} />
+
+              <H3>React / Next.js pattern</H3>
+              <P>Set it in a <Code>useEffect</Code> at the root of your authenticated layout so the bot has full profile context on every page. Merge additional data (billing, cart, record details) deeper in the tree — each page just spreads the existing value and adds its own key.</P>
+              <CodeBlock filename="AuthLayout.tsx" code={`// Root authenticated layout — runs once after login
+useEffect(() => {
+  if (!user) return;
+  window.fluxchatContext = {
+    user: {
+      name: user.displayName,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      location: user.location,
+    },
+    org: { name: currentOrg.name },
+  };
+}, [user, currentOrg]);
+
+// Billing page — adds quota data on top, removes on unmount
+useEffect(() => {
+  window.fluxchatContext = {
+    ...window.fluxchatContext,
+    billing: { plan: "Enterprise", messages_used: 255, messages_limit: 500000 },
+  };
+  return () => {
+    const c = { ...window.fluxchatContext };
+    delete c.billing;
+    window.fluxchatContext = c;
+  };
+}, [subscription, usage]);`} />
+
+              <Callout>The bot reads <Code>window.fluxchatContext</Code> at send time — update it at any point and the next message will include the latest value. No re-init needed.</Callout>
             </V2Only>
 
             <H2 id="integrations">Works with your stack</H2>
@@ -416,7 +455,7 @@ fluxchat kb crawl --url https://acme.com/sitemap.xml --sitemap --max-pages 20`} 
                 </table>
               </div>
               <P>Provision both keys at once for a new organisation:</P>
-              <CodeBlock filename="provision.sh" code={`curl -X POST /api/v2/organizations/$ORG_ID/api-keys/provision \\
+              <CodeBlock filename="provision.sh" code={String.raw`curl -X POST /api/v2/organizations/$ORG_ID/api-keys/provision \
   -H "Authorization: Bearer $ADMIN_JWT"`} />
               <Callout>The widget detects the key prefix automatically (<Code>autoEnvDetect: true</Code> by default) and shows a DEV badge in the header when a dev key is used, or when the hostname is local.</Callout>
             </V2Only>
