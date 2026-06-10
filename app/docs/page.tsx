@@ -23,8 +23,8 @@ function H2({ id, children }: Readonly<{ id: string; children: React.ReactNode }
 function P({ children }: Readonly<{ children: React.ReactNode }>) {
   return <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">{children}</p>;
 }
-function H3({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <h3 className="mt-7 text-lg font-semibold">{children}</h3>;
+function H3({ children, id }: Readonly<{ children: React.ReactNode; id?: string }>) {
+  return <h3 id={id} className="mt-7 text-lg font-semibold">{children}</h3>;
 }
 function Code({ children }: Readonly<{ children: React.ReactNode }>) {
   return <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12.5px] text-foreground">{children}</code>;
