@@ -26,6 +26,8 @@ const NAV_ITEMS = [
   { id: "install", label: "Installation" },
   { id: "quickstart", label: "Quickstart" },
   { id: "widget", label: "Widget (browser)" },
+  { id: "autocapture", label: "autoCapture" },
+  { id: "platformapi", label: "platformApi (live data)" },
   { id: "context", label: "User context injection" },
   { id: "frameworks", label: "Framework setup" },
   { id: "api", label: "API reference" },
@@ -63,7 +65,7 @@ export default function JsSDKPage() {
               <h1 className="mt-1 text-4xl font-extrabold tracking-tight">JavaScript / TypeScript SDK</h1>
             </div>
             <span className="mt-2 rounded-full bg-green-500/10 px-3 py-1 text-[12px] font-medium text-green-600 dark:text-green-400">
-              v0.1.4 · Stable
+              v0.1.5 · Stable
             </span>
           </div>
           <P>
@@ -107,6 +109,45 @@ export default function App() {
     </>
   );
 }`} />
+
+          <H2 id="autocapture">autoCapture — zero-config site intelligence</H2>
+          <P>
+            From v0.1.5, the widget passively captures every page the user visits and stores it in FluxChat. The bot can instantly answer questions about any content on your site — no admin setup, no KB imports, no crawl commands.
+          </P>
+          <CodeBlock filename="any-site.html" code={`<!-- That's it. autoCapture is true by default. -->
+<script src="https://cdn.jsdelivr.net/npm/@fluxchat_sdk/sdk/dist/widget.global.js"></script>
+<script>
+  FluxChatWidget.init({ apiKey: 'fc_live_xxx' });
+</script>
+
+<!-- User visits /about → captured
+     User visits /sermons → captured
+     User asks "what are the latest sermons?" → bot answers from captured content -->`} />
+          <P>
+            Works on <strong>static HTML, WordPress, React Router, Vue Router, Angular, Next.js</strong> — any site. SPA navigation is intercepted via <Code>pushState</Code> / <Code>replaceState</Code> / <Code>popstate</Code> / <Code>hashchange</Code>. Each unique URL is captured once per browser session.
+          </P>
+          <P>
+            Set <Code>autoCapture: false</Code> only if you populate the knowledge base yourself (admin import or crawl).
+          </P>
+
+          <H2 id="platformapi">platformApi — live data from your own API</H2>
+          <P>
+            The widget can query your platform&apos;s REST API in real time to answer questions that require fresh data (orders, events, products, sermons, etc.).
+          </P>
+          <CodeBlock filename="init.js" code={`FluxChatWidget.init({
+  apiKey: 'fc_live_xxx',
+  platformApi: {
+    baseUrl: 'https://api.my-app.com',
+    // authTokenKeys: ['member_token', 'admin_token'] // optional override
+  },
+});
+// The widget fetches your OpenAPI/Swagger spec once, scores every GET endpoint
+// against each user question, calls the top matches, and injects the results
+// into context before sending to FluxChat.
+// The user's auth token is read from localStorage automatically.`} />
+          <P>
+            No manual intent/action setup. No configuration beyond the base URL. If your API has an OpenAPI spec (<Code>/openapi.json</Code>, <Code>/swagger.json</Code>, or <Code>/api-docs</Code>), the bot uses it automatically.
+          </P>
 
           <H2 id="context">User context injection</H2>
           <P>
@@ -235,8 +276,17 @@ const { organizationId, scopes } = await client.testKey();`} />
                 {[
                   ["apiKey", "string", "—", "Required. Your fc_prod_... key."],
                   ["baseUrl", "string", "auto", "Override API URL (useful for self-hosted)."],
-                  ["position", "'bottom-right' | 'bottom-left'", "'bottom-right'", "Widget position."],
-                  ["welcomeMessage", "string", "auto", "First message shown to user."],
+                  ["clientName", "string", "—", "Brand name shown in the header."],
+                  ["assistantName", "string", "'Assistant'", "Assistant display name."],
+                  ["primaryColor", "string", "'#4f46e5'", "Brand color for header and buttons."],
+                  ["theme", "'light' | 'dark'", "'light'", "Initial color theme."],
+                  ["position", "'right' | 'left'", "'right'", "Launcher corner."],
+                  ["greeting", "string", "auto", "First message shown to user."],
+                  ["context", "string", "—", "Static context sent with every message."],
+                  ["autoContext", "boolean", "true", "Auto-inject page title, URL, DOM text and window.fluxchatContext into every message."],
+                  ["autoCapture", "boolean", "true", "Passively capture every page visited — bot learns your entire site automatically."],
+                  ["platformApi", "{ baseUrl: string }", "—", "Your REST API base URL. Widget auto-queries relevant endpoints per message for live data."],
+                  ["openOnLoad", "boolean", "false", "Open the panel automatically."],
                 ].map(([prop, type, def, desc]) => (
                   <tr key={prop} className="border-t border-border">
                     <td className="px-4 py-2 font-mono text-[12px] text-primary">{prop}</td>
