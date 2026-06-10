@@ -33,7 +33,13 @@ export const SIDEBAR: { group: string; items: { id: string; label: string }[] }[
     { id: "api-keys", label: "Dev & prod keys" },
     { id: "versions", label: "API versions" },
   ] },
-  { group: "Project", items: [{ id: "contributing", label: "Contributing" }] },
+  { group: "For Developers", items: [
+    { id: "for-devs", label: "Build an SDK" },
+    { id: "api-reference", label: "API reference" },
+    { id: "sdk-checklist", label: "Implementation checklist" },
+    { id: "contributing", label: "How to contribute" },
+  ] },
+  { group: "Project", items: [{ id: "contributing-js", label: "JS SDK — Contributing" }] },
 ];
 
 export function DocsSidebar() {

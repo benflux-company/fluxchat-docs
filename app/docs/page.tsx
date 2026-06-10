@@ -485,12 +485,119 @@ fluxchat kb crawl --url https://acme.com/sitemap.xml --sitemap --max-pages 20`} 
             </div>
             <P>Sending <Code>context</Code> to v1 returns <Code>400</Code> — use v2 for context-aware answers.</P>
 
-            <H2 id="contributing">Contributing</H2>
-            <P>FluxChat SDK is open source (MIT) on <a className="text-primary" href="https://github.com/benflux-company/fluxchat-sdk" target="_blank" rel="noreferrer">GitHub</a>. Issues and pull requests are welcome.</P>
-            <CodeBlock filename="contribute" code={`git clone https://github.com/benflux-company/fluxchat-sdk
+            <H2 id="for-devs">For Developers — Build an SDK</H2>
+            <P>The JS/TypeScript SDK is the reference implementation. Community SDKs for other languages are tracked as open issues — pick one, fork the repo, and submit a PR.</P>
+
+            <H3>Open SDK issues</H3>
+            <div className="mt-4 overflow-hidden rounded-xl border border-border">
+              <table className="w-full text-sm">
+                <thead><tr className="bg-muted/40 text-left text-muted-foreground">
+                  <th className="px-4 py-2 font-medium">Stack</th>
+                  <th className="px-4 py-2 font-medium">Branch</th>
+                  <th className="px-4 py-2 font-medium">Issue</th>
+                </tr></thead>
+                <tbody>
+                  {[
+                    { stack: "Dart / Flutter", branch: "sdk/dart", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/3" },
+                    { stack: "Python", branch: "sdk/python", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/1" },
+                    { stack: "PHP", branch: "sdk/php", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/2" },
+                    { stack: "Go", branch: "sdk/go", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/4" },
+                    { stack: "C# / .NET", branch: "sdk/dotnet", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/5" },
+                    { stack: "Swift (iOS / macOS)", branch: "sdk/swift", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/6" },
+                    { stack: "Kotlin (Android)", branch: "sdk/kotlin", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/7" },
+                    { stack: "React Native", branch: "sdk/react-native", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/8" },
+                  ].map(({ stack, branch, issue }) => (
+                    <tr key={branch} className="border-t border-border">
+                      <td className="px-4 py-2 font-medium">{stack}</td>
+                      <td className="px-4 py-2"><Code>{branch}</Code></td>
+                      <td className="px-4 py-2"><a className="text-primary hover:underline" href={issue} target="_blank" rel="noreferrer">View issue →</a></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <H3 id="api-reference">API reference</H3>
+            <P>All SDKs call the same REST endpoint. No SDK package required — just HTTP.</P>
+            <CodeBlock filename="ask.http" code={`POST https://dev-api.fluxchat-corp.com/api/v2/public/bot/ask
+Content-Type: application/json
+X-API-Key: fc_prod_your_key
+
+{
+  "message": "What are your opening hours?",
+  "context": "User: Alice, Plan: Pro",    // optional — highest priority
+  "conversationId": ""                    // optional — omit for stateless
+}
+
+// Response
+{
+  "success": true,
+  "data": {
+    "reply": "We are open Mon–Fri 9am–6pm.",
+    "conversationId": "conv-uuid",
+    "intent": null,
+    "confidence": 1
+  }
+}`} />
+            <CodeBlock filename="test-key.http" code={`GET https://dev-api.fluxchat-corp.com/api/v2/public/bot/test
+X-API-Key: fc_prod_your_key
+
+// Response
+{
+  "success": true,
+  "data": { "organizationId": "org-uuid", "scopes": ["bot:read"] }
+}`} />
+
+            <H3 id="sdk-checklist">What every SDK must implement</H3>
+            <div className="mt-4 overflow-hidden rounded-xl border border-border">
+              <table className="w-full text-sm">
+                <thead><tr className="bg-muted/40 text-left text-muted-foreground">
+                  <th className="px-4 py-2 font-medium">Feature</th>
+                  <th className="px-4 py-2 font-medium">Auth required</th>
+                  <th className="px-4 py-2 font-medium">Description</th>
+                </tr></thead>
+                <tbody>
+                  {[
+                    { feature: "ask(message, context?, conversationId?)", auth: "API key", desc: "Send a message, return reply + conversationId" },
+                    { feature: "testKey()", auth: "API key", desc: "Verify the key, return organizationId + scopes" },
+                    { feature: "knowledge.create(title, content, ...)", auth: "API key (bot:write)", desc: "Add a KB article" },
+                    { feature: "knowledge.update(id, patch)", auth: "API key (bot:write)", desc: "Update a KB article" },
+                    { feature: "knowledge.delete(id)", auth: "API key (bot:write)", desc: "Delete a KB article" },
+                    { feature: "knowledge.list()", auth: "JWT (admin)", desc: "List all KB articles" },
+                    { feature: "knowledge.get(id)", auth: "JWT (admin)", desc: "Get one KB article" },
+                    { feature: "Error types", auth: "—", desc: "ApiError, NetworkError, ConfigError with status code" },
+                  ].map(({ feature, auth, desc }) => (
+                    <tr key={feature} className="border-t border-border">
+                      <td className="px-4 py-2 font-mono text-[12px]">{feature}</td>
+                      <td className="px-4 py-2 text-muted-foreground text-[12px]">{auth}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{desc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <H3 id="contributing">How to contribute</H3>
+            <P>Fork the repo, create your branch, implement the checklist above, open a PR. All PRs require one review before merge.</P>
+            <CodeBlock filename="terminal" code={`# 1. Fork on GitHub, then clone your fork
+git clone https://github.com/YOUR_USERNAME/fluxchat-sdk.git
+cd fluxchat-sdk
+
+# 2. Create your branch
+git checkout -b sdk/dart   # replace 'dart' with your language
+
+# 3. Create sdk/<language>/ with your code + README + tests
+
+# 4. Push and open a PR against main
+git push origin sdk/dart`} />
+            <Callout>Read <a className="text-primary" href="https://github.com/benflux-company/fluxchat-sdk/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">CONTRIBUTING.md</a> for the full guide — required files, test expectations, and PR rules.</Callout>
+
+            <H2 id="contributing-js">Contributing to the JS SDK</H2>
+            <P>FluxChat SDK is open source (MIT) on <a className="text-primary" href="https://github.com/benflux-company/fluxchat-sdk" target="_blank" rel="noreferrer">GitHub</a>. Bug fixes and improvements are welcome.</P>
+            <CodeBlock filename="terminal" code={`git clone https://github.com/benflux-company/fluxchat-sdk
 cd fluxchat-sdk && npm install
 npm run build   # tsup → ESM + CJS + types + CLI + widget
-npm test        # vitest (25 tests)`} />
+npm test        # vitest`} />
           </VersionProvider>
 
           <Footer />
