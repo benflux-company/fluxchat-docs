@@ -5,15 +5,27 @@ export const metadata: Metadata = { title: "Changelog" };
 
 const RELEASES = [
   {
+    version: "0.1.8", date: "2026-06-11", heading: "Added",
+    items: [
+      "Widget: quickReplies option — tap-to-send chip row shown below the greeting; chips disappear after first user message.",
+      "Widget: smart input correction — debounced autocorrect chip (900 ms) with ghost-text inline preview; accept with Tab / → / click.",
+      "Widget: modern redesign — glassmorphism panel shadow, gradient header with shimmer, slide-in message animation, per-row bot avatar, refined send button.",
+      "Widget: suggestion chip bar (.fcw-suggestion) — shows corrected text above composer with Accept / Send / Dismiss actions.",
+      "Gateway: public bot prompt respects org strictMode config — non-strict orgs answer from general knowledge when KB is empty.",
+      "Gateway: anti-hallucination rule is now conditional — strict mode forces exact KB answers; non-strict mode allows general knowledge with org-fact guard.",
+      "Gateway: bot config customInstructions field honoured in system prompt for persona override.",
+    ],
+  },
+  {
     version: "0.1.7", date: "2026-06-11", heading: "Added",
     items: [
       "Widget: universal API interception — fetch() and XMLHttpRequest GET JSON responses are automatically captured and sent to the bot knowledge base.",
       "Widget: localStorage snapshot capture on load — user session data (excluding auth/token keys) is captured as context.",
       "Widget: sendCapture() uses fetch keepalive:true instead of sendBeacon (supports custom X-API-Key header).",
       "Widget: client-side FNV-1a hash dedup — same-content captures are not re-sent.",
-      "Gateway: auto-KB learning — after each capture, Mistral automatically extracts structured knowledge (title, content, category, keywords) and stores it permanently in bot_knowledge (source='auto').",
+      "Gateway: auto-KB learning — after each capture, the AI gateway automatically extracts structured knowledge (title, content, category, keywords) and stores it permanently in bot_knowledge (source='auto').",
       "Gateway: content-change refresh — when captured content hash changes, stale auto-KB entry is deleted and re-extracted.",
-      "Gateway: extraction concurrency limiter (max 2 per org) prevents Mistral API bursts on first visit.",
+      "Gateway: extraction concurrency limiter (max 2 per org) prevents AI API bursts on first visit.",
     ],
   },
   {

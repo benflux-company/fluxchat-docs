@@ -122,6 +122,105 @@ const { reply } = await fluxchat.ask({
               <V2Only><li><b>Auto-context</b> — widget captures the current page automatically, no code needed.</li></V2Only>
             </ul>
 
+            {/* ── Architecture ─────────────────────────────────── */}
+            <H2 id="architecture">Architecture</H2>
+            <P>FluxChat is a three-layer system: your <b>browser / app</b>, the <b>FluxChat Gateway</b> (NestJS, multi-tenant PostgreSQL, Redis), and an <b>AI provider</b> that never surfaces to end-users.</P>
+
+            <div className="mt-6 overflow-x-auto rounded-xl border border-border bg-muted/30 p-5 font-mono text-[12px] leading-relaxed text-muted-foreground">
+              <pre>{`Browser / App                  FluxChat Gateway              AI Provider
+─────────────────────────────────────────────────────────────────────
+1. User visits page
+   SDK auto-captures DOM ──────► POST /bot/pages
+   + fetch/XHR JSON responses       │
+   + localStorage snapshot          │ 2. extractAndLearn ─────────►
+                                     │    (async, rate-limited)    │
+                                     │ ◄── structured KB entry ────┘
+                                     │    stored in bot_knowledge
+                                     │
+3. User sends message ─────────────► POST /bot/ask
+                                     │
+                                     │ 4. SQL ILIKE search
+                                     │    bot_knowledge + bot_session_page
+                                     │
+                                     │ 5. Build system prompt
+                                     │    = persona + KB context
+                                     │      + live context + history
+                                     │
+                                     │ 6. Call AI ─────────────────►
+                                     │ ◄── reply ──────────────────┘
+4. ◄── reply ◄─────────────────────┘`}</pre>
+            </div>
+
+            <H3>Key components</H3>
+            <div className="mt-4 overflow-hidden rounded-xl border border-border">
+              <table className="w-full text-sm">
+                <thead><tr className="bg-muted/40 text-left text-muted-foreground">
+                  <th className="px-4 py-2 font-medium">Layer</th>
+                  <th className="px-4 py-2 font-medium">What it does</th>
+                </tr></thead>
+                <tbody>
+                  {[
+                    ["Widget SDK", "Embeddable JS bundle — captures context, sends messages, renders the chat UI."],
+                    ["Gateway /bot/pages", "Receives captures (page DOM, API JSON, localStorage). Stores in bot_session_page (24h TTL) and triggers async KB extraction."],
+                    ["extractAndLearn", "Background job per capture — calls the AI to extract structured knowledge (title, content, category, keywords) and upserts it permanently into bot_knowledge."],
+                    ["bot_knowledge", "Permanent, searchable knowledge base per tenant schema. Source of truth for the bot."],
+                    ["bot_session_page", "Short-lived live captures (24h). Searched first — highest priority, most recent data."],
+                    ["Gateway /bot/ask", "Combines KB search results + context + conversation history into a system prompt, then calls the AI."],
+                    ["Strict mode", "When enabled, the bot only answers from bot_knowledge. Off by default — bot falls back to general knowledge."],
+                  ].map(([layer, desc]) => (
+                    <tr key={String(layer)} className="border-t border-border">
+                      <td className="px-4 py-2 font-semibold text-foreground">{layer}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{desc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── Auto-KB pipeline ──────────────────────────────── */}
+            <V2Only>
+              <H2 id="auto-kb">Auto-KB pipeline<V2Badge /></H2>
+              <P>When <Code>autoCapture: true</Code> (the default), the widget silently captures every page the user visits and every JSON API response the app makes. The Gateway processes each capture in two stages.</P>
+
+              <H3>Stage 1 — Ingest (immediate)</H3>
+              <P>The widget POSTs the raw content to <Code>/api/v2/public/bot/pages</Code>. The Gateway stores it in <Code>bot_session_page</Code> (24-hour TTL) and makes it <b>instantly searchable</b> — the bot can answer questions about it right away.</P>
+
+              <H3>Stage 2 — Extract (async, AI-powered)</H3>
+              <P>For each new or changed capture, the Gateway calls the AI to extract structured knowledge:</P>
+              <CodeBlock filename="extracted-entry.json" code={`{
+  "title": "Bengali Chicken Curry",
+  "content": "Chicken curry from Bengal. Ingredients: 4 chicken breasts…",
+  "category": "recipe",
+  "keywords": ["chicken", "curry", "bengal", "spices"]
+}`} />
+              <P>This entry is written to <Code>bot_knowledge</Code> (permanent, no TTL). From that point on, the bot answers from the KB even after the session page expires. Extraction is <b>rate-limited to 2 concurrent jobs per org</b> to avoid spikes.</P>
+
+              <H3>What gets captured</H3>
+              <div className="mt-4 overflow-hidden rounded-xl border border-border">
+                <table className="w-full text-sm">
+                  <thead><tr className="bg-muted/40 text-left text-muted-foreground">
+                    <th className="px-4 py-2 font-medium">Type</th>
+                    <th className="px-4 py-2 font-medium">Source</th>
+                    <th className="px-4 py-2 font-medium">Skipped when</th>
+                  </tr></thead>
+                  <tbody>
+                    {[
+                      ["page", "DOM innerText of <main> or <body> + visible links", "Under 80 chars (not yet rendered)"],
+                      ["api", "GET JSON responses from fetch() or XHR", "Auth endpoints, uploads, binary, > 80 KB"],
+                      ["cache", "localStorage key/value snapshot", "Token, auth, JWT, session, password keys"],
+                    ].map(([type, source, skip]) => (
+                      <tr key={String(type)} className="border-t border-border">
+                        <td className="px-4 py-2"><Code>{type}</Code></td>
+                        <td className="px-4 py-2 text-muted-foreground">{source}</td>
+                        <td className="px-4 py-2 text-muted-foreground">{skip}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Callout><b>Privacy:</b> Auth tokens, passwords, JWTs, session keys and binary data are never captured. The widget filters by key name for localStorage and by URL pattern for API calls.</Callout>
+            </V2Only>
+
             <H2 id="widget">The embeddable widget</H2>
             <P>A floating chat bubble, great out of the box and fully themeable. Drop it in with a script tag, or import it in your framework.</P>
             <VersionSwitch
@@ -147,6 +246,48 @@ const widget = init({
 });
 // widget.open() · widget.toggleTheme() · widget.destroy()`} />}
             />
+
+            {/* ── Quick replies ─────────────────────────────────── */}
+            <H2 id="quick-replies">Quick replies</H2>
+            <P>Show a row of tap-to-send chips below the greeting message. Great for onboarding — users see what the bot can answer before typing anything. The chips disappear as soon as the first message is sent.</P>
+            <CodeBlock filename="widget-quick-replies.ts" code={`import { init } from '@fluxchat_sdk/sdk/widget';
+
+init({
+  apiKey: 'fc_prod_xxx',
+  greeting: 'Bonjour ! Comment puis-je vous aider ?',
+  quickReplies: [
+    'Quelles sont vos horaires ?',
+    'Comment vous contacter ?',
+    'Voir les tarifs',
+    'Suivre ma commande',
+  ],
+});`} />
+            <Callout>Chips are <b>horizontally scrollable</b> — no limit on the number of items, though 3–5 is optimal for UX. Clicking a chip sends the message immediately and hides the row.</Callout>
+
+            {/* ── Autocorrect ───────────────────────────────────── */}
+            <V2Only>
+              <H2 id="autocorrect">Smart input correction<V2Badge /></H2>
+              <P>The widget automatically detects typos and grammar errors as the user types (debounced 900 ms). When a correction is found, a <b>suggestion chip</b> appears above the input — no configuration needed.</P>
+
+              <H3>How it works</H3>
+              <ol className="mt-4 list-decimal space-y-1.5 pl-5 text-[15px] text-muted-foreground">
+                <li>User types a message with errors (minimum 7 characters).</li>
+                <li>After 900 ms of inactivity, the widget sends the raw text to the bot with a correction prompt.</li>
+                <li>If the bot returns a corrected version (normalized comparison — case, trailing punctuation), the suggestion chip appears above the input.</li>
+                <li>User accepts with <Code>Tab</Code> / <Code>→</Code> / chip click, or sends corrected text directly.</li>
+              </ol>
+
+              <div className="mt-6 overflow-x-auto rounded-xl border border-border bg-muted/30 p-5 font-mono text-[12px] leading-relaxed text-muted-foreground">
+                <pre>{`  ┌─────────────────────────────────────────────────┐
+  │ Correction suggérée :  [quel est le curry ?]  Envoyer  ×  │
+  ├─────────────────────────────────────────────────┤
+  │  kelle es le cury ?                      [Send] │
+  └─────────────────────────────────────────────────┘`}</pre>
+              </div>
+
+              <P>The correction never mentions the underlying AI — the UI label reads <b>"Correction suggérée"</b>. No configuration required; the feature is always active in the widget.</P>
+              <Callout><b>Ghost text:</b> If the corrected text starts with what the user already typed, the missing suffix is shown inline as grey ghost text — same UX as mobile autocomplete. Accept with <Code>Tab</Code> or <Code>→</Code> at the end of the input.</Callout>
+            </V2Only>
 
             <H2 id="modes">Floating &amp; inline</H2>
             <P>Two display modes via the <Code>mode</Code> option.</P>
@@ -181,8 +322,11 @@ const widget = init({
                     ["position", "right", "Launcher corner (floating).", false],
                     ["context", "—", "Static context sent with every message.", false],
                     ["showBranding", "true", "Show the Benflux footer.", false],
+                    ["greeting", "Bonjour…", "First bot message shown when the panel opens.", false],
+                    ["quickReplies", "—", "Array of tap-to-send chips shown below the greeting.", false],
                     ["autoEnvDetect", "true", "DEV badge + header on localhost / fc_dev_ keys.", true],
                     ["autoContext", "true", "Auto-capture page title, URL and visible text as context.", true],
+                    ["autoCapture", "true", "Passively capture every page + API call into the KB.", true],
                     ["autoCrawl", "false", "Silently index the current page in your KB on first load.", true],
                   ] as const).map(([opt, def, desc, v2only]) => (
                     <tr key={opt} className="border-t border-border">

@@ -26,6 +26,7 @@ const NAV_ITEMS = [
   { id: "install", label: "Installation" },
   { id: "quickstart", label: "Quickstart" },
   { id: "widget", label: "Widget (browser)" },
+  { id: "quickreplies", label: "Quick replies" },
   { id: "autocapture", label: "autoCapture" },
   { id: "autokb", label: "Auto-KB learning" },
   { id: "platformapi", label: "platformApi (live data)" },
@@ -66,7 +67,7 @@ export default function JsSDKPage() {
               <h1 className="mt-1 text-4xl font-extrabold tracking-tight">JavaScript / TypeScript SDK</h1>
             </div>
             <span className="mt-2 rounded-full bg-green-500/10 px-3 py-1 text-[12px] font-medium text-green-600 dark:text-green-400">
-              v0.1.7 · Stable
+              v0.1.8 · Stable
             </span>
           </div>
           <P>
@@ -111,6 +112,30 @@ export default function App() {
   );
 }`} />
 
+          <H2 id="quickreplies">Quick replies — greeting chip row</H2>
+          <P>
+            Pass a <Code>quickReplies</Code> array to show tap-to-send chips below the greeting message when the panel first opens. Each chip sends that exact text as the user&apos;s first message and then disappears.
+          </P>
+          <CodeBlock filename="init.js" code={`FluxChatWidget.init({
+  apiKey: 'fc_live_xxx',
+  greeting: 'Bonjour ! Comment puis-je vous aider ?',
+  quickReplies: [
+    'What can you do?',
+    'Show me pricing',
+    'I need support',
+  ],
+});
+
+// React component:
+<FluxChatWidget
+  apiKey={process.env.NEXT_PUBLIC_FLUXCHAT_API_KEY!}
+  greeting="Hello! How can I help?"
+  quickReplies={['What can you do?', 'Show me pricing', 'Contact sales']}
+/>`} />
+          <P>
+            Chips are horizontally scrollable on mobile, styled with your <Code>primaryColor</Code>, and removed permanently as soon as the user sends any message (whether via a chip or by typing).
+          </P>
+
           <H2 id="autocapture">autoCapture — zero-config site intelligence</H2>
           <P>
             From v0.1.5, the widget passively captures every page the user visits. From <strong>v0.1.7</strong>, it also intercepts all <Code>fetch()</Code> and <Code>XMLHttpRequest</Code> GET responses (JSON only) and snapshots <Code>localStorage</Code> — giving the bot full awareness of your app's live data with zero configuration.
@@ -147,7 +172,7 @@ export default function App() {
         ↓
 Gateway stores raw capture (bot_session_page, TTL 1h)
         ↓  [fire-and-forget, max 2 concurrent per org]
-Mistral extracts:
+AI gateway extracts:
   • title      — "Services and pricing — Acme Corp"
   • content    — "Acme offers web dev ($500–2000), SEO ($300/mo)…"
   • category   — pricing | product | contact | support | …
@@ -319,6 +344,7 @@ const { organizationId, scopes } = await client.testKey();`} />
                   ["autoContext", "boolean", "true", "Auto-inject page title, URL, DOM text and window.fluxchatContext into every message."],
                   ["autoCapture", "boolean", "true", "Passively capture every page visited — bot learns your entire site automatically."],
                   ["platformApi", "{ baseUrl: string }", "—", "Your REST API base URL. Widget auto-queries relevant endpoints per message for live data."],
+                  ["quickReplies", "string[]", "[]", "Tap-to-send chip row shown below the greeting. Chips disappear after the first user message. E.g. ['What can you do?', 'Show me pricing']."],
                   ["openOnLoad", "boolean", "false", "Open the panel automatically."],
                 ].map(([prop, type, def, desc]) => (
                   <tr key={prop} className="border-t border-border">
