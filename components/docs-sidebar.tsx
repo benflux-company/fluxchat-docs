@@ -35,11 +35,16 @@ export const SIDEBAR: { group: string; items: { id: string; label: string }[] }[
   ] },
   { group: "For Developers", items: [
     { id: "for-devs", label: "Build an SDK" },
-    { id: "api-reference", label: "API reference" },
+    { id: "api-reference", label: "REST API reference" },
     { id: "sdk-checklist", label: "Implementation checklist" },
+    { id: "sdk-folder-structure", label: "Folder structure" },
+    { id: "sdk-test-coverage", label: "Test coverage" },
+    { id: "sdk-examples", label: "Code examples" },
     { id: "contributing", label: "How to contribute" },
   ] },
-  { group: "Project", items: [{ id: "contributing-js", label: "JS SDK — Contributing" }] },
+  { group: "Project", items: [
+    { id: "contributing-js", label: "JS SDK — Contributing" },
+  ] },
 ];
 
 export function DocsSidebar() {

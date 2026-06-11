@@ -630,7 +630,7 @@ fluxchat kb crawl --url https://acme.com/sitemap.xml --sitemap --max-pages 20`} 
             <P>Sending <Code>context</Code> to v1 returns <Code>400</Code> — use v2 for context-aware answers.</P>
 
             <H2 id="for-devs">For Developers — Build an SDK</H2>
-            <P>The JS/TypeScript SDK is the reference implementation. Community SDKs for other languages are tracked as open issues — pick one, fork the repo, and submit a PR.</P>
+            <P>The JS/TypeScript SDK is the reference implementation. Community SDKs for other languages are tracked as open GitHub issues — pick one, fork the repo, and submit a PR. All SDKs call the same REST API; no framework dependency is required.</P>
 
             <H3>Open SDK issues</H3>
             <div className="mt-4 overflow-hidden rounded-xl border border-border">
@@ -642,9 +642,9 @@ fluxchat kb crawl --url https://acme.com/sitemap.xml --sitemap --max-pages 20`} 
                 </tr></thead>
                 <tbody>
                   {[
-                    { stack: "Dart / Flutter", branch: "sdk/dart", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/3" },
                     { stack: "Python", branch: "sdk/python", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/1" },
                     { stack: "PHP", branch: "sdk/php", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/2" },
+                    { stack: "Dart / Flutter", branch: "sdk/dart", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/3" },
                     { stack: "Go", branch: "sdk/go", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/4" },
                     { stack: "C# / .NET", branch: "sdk/dotnet", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/5" },
                     { stack: "Swift (iOS / macOS)", branch: "sdk/swift", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/6" },
@@ -661,87 +661,264 @@ fluxchat kb crawl --url https://acme.com/sitemap.xml --sitemap --max-pages 20`} 
               </table>
             </div>
 
-            <H3 id="api-reference">API reference</H3>
-            <P>All SDKs call the same REST endpoint. No SDK package required — just HTTP.</P>
-            <CodeBlock filename="ask.http" code={`POST https://dev-api.fluxchat-corp.com/api/v2/public/bot/ask
+            <H3 id="api-reference">REST API — base URL</H3>
+            <P>Base URL: <Code>https://dev-api.fluxchat-corp.com/api/v2</Code>. All public endpoints require <Code>X-API-Key: fc_prod_your_key</Code> in the request header.</P>
+            <CodeBlock filename="ask.http" code={`POST /public/bot/ask
 Content-Type: application/json
 X-API-Key: fc_prod_your_key
 
 {
   "message": "What are your opening hours?",
   "context": "User: Alice, Plan: Pro",    // optional — highest priority
+  "sessionId": "sess_abc123",             // optional — stateful Redis session
   "conversationId": ""                    // optional — omit for stateless
 }
 
-// Response
+// Success response (every endpoint follows this envelope)
 {
   "success": true,
   "data": {
     "reply": "We are open Mon–Fri 9am–6pm.",
-    "conversationId": "conv-uuid",
+    "conversationId": "conv-uuid",        // empty string if stateless
     "intent": null,
     "confidence": 1
-  }
-}`} />
-            <CodeBlock filename="test-key.http" code={`GET https://dev-api.fluxchat-corp.com/api/v2/public/bot/test
-X-API-Key: fc_prod_your_key
+  },
+  "timestamp": "2026-06-11T00:00:00.000Z"
+}
 
-// Response
+// Error response
 {
-  "success": true,
-  "data": { "organizationId": "org-uuid", "scopes": ["bot:read"] }
+  "success": false,
+  "statusCode": 403,
+  "message": "API key missing required scope(s): bot:write",
+  "timestamp": "2026-06-11T00:00:00.000Z"
 }`} />
+            <CodeBlock filename="other-endpoints.http" code={`// Verify API key
+GET /public/bot/test
+X-API-Key: fc_prod_your_key
+→ { "data": { "organizationId": "uuid", "scopes": ["bot:write"] } }
+
+// Passive page capture (no bot:write needed)
+POST /public/bot/pages
+{ "url": "https://app.com/about", "title": "About", "content": "…max 6000 chars…" }
+→ 204 No Content
+
+// KB article — requires bot:write scope
+POST   /bot/knowledge          { title, content, category, keywords }
+PATCH  /bot/knowledge/:id      { content: "updated" }
+DELETE /bot/knowledge/:id      → 204
+
+// Admin (JWT required)
+GET    /bot/knowledge           list all articles
+GET    /bot/knowledge/:id       get one article
+GET    /bot/config              get persona config
+PATCH  /bot/config              { assistantName, tone, styleRules, strictMode }`} />
 
             <H3 id="sdk-checklist">What every SDK must implement</H3>
             <div className="mt-4 overflow-hidden rounded-xl border border-border">
               <table className="w-full text-sm">
                 <thead><tr className="bg-muted/40 text-left text-muted-foreground">
                   <th className="px-4 py-2 font-medium">Feature</th>
-                  <th className="px-4 py-2 font-medium">Auth required</th>
+                  <th className="px-4 py-2 font-medium">Auth</th>
+                  <th className="px-4 py-2 font-medium">Required</th>
                   <th className="px-4 py-2 font-medium">Description</th>
                 </tr></thead>
                 <tbody>
                   {[
-                    { feature: "ask(message, context?, conversationId?)", auth: "API key", desc: "Send a message, return reply + conversationId" },
-                    { feature: "testKey()", auth: "API key", desc: "Verify the key, return organizationId + scopes" },
-                    { feature: "knowledge.create(title, content, ...)", auth: "API key (bot:write)", desc: "Add a KB article" },
-                    { feature: "knowledge.update(id, patch)", auth: "API key (bot:write)", desc: "Update a KB article" },
-                    { feature: "knowledge.delete(id)", auth: "API key (bot:write)", desc: "Delete a KB article" },
-                    { feature: "knowledge.list()", auth: "JWT (admin)", desc: "List all KB articles" },
-                    { feature: "knowledge.get(id)", auth: "JWT (admin)", desc: "Get one KB article" },
-                    { feature: "Error types", auth: "—", desc: "ApiError, NetworkError, ConfigError with status code" },
-                  ].map(({ feature, auth, desc }) => (
+                    { feature: "ask(message, context?, conversationId?)", auth: "API key", req: "Yes", desc: "Send a message, return reply + conversationId" },
+                    { feature: "testKey()", auth: "API key", req: "Yes", desc: "Verify the key, return organizationId + scopes" },
+                    { feature: "capturePage(url, title, content)", auth: "API key", req: "Recommended", desc: "POST /public/bot/pages — passive capture for mobile/desktop SDKs" },
+                    { feature: "knowledge.create(title, content, ...)", auth: "API key (bot:write)", req: "Yes", desc: "Add a KB article" },
+                    { feature: "knowledge.update(id, patch)", auth: "API key (bot:write)", req: "Yes", desc: "Update a KB article" },
+                    { feature: "knowledge.delete(id)", auth: "API key (bot:write)", req: "Yes", desc: "Delete a KB article" },
+                    { feature: "knowledge.list()", auth: "JWT (admin)", req: "Yes", desc: "List all KB articles" },
+                    { feature: "knowledge.get(id)", auth: "JWT (admin)", req: "Yes", desc: "Get one KB article" },
+                    { feature: "FluxChatNetworkError", auth: "—", req: "Yes", desc: "Connection refused, timeout, DNS failure" },
+                    { feature: "FluxChatApiError(status, message)", auth: "—", req: "Yes", desc: "HTTP 4xx / 5xx — include status code" },
+                    { feature: "FluxChatConfigError(message)", auth: "—", req: "Yes", desc: "Missing API key, invalid baseUrl" },
+                  ].map(({ feature, auth, req, desc }) => (
                     <tr key={feature} className="border-t border-border">
-                      <td className="px-4 py-2 font-mono text-[12px]">{feature}</td>
+                      <td className="px-4 py-2 font-mono text-[11px] text-primary">{feature}</td>
                       <td className="px-4 py-2 text-muted-foreground text-[12px]">{auth}</td>
-                      <td className="px-4 py-2 text-muted-foreground">{desc}</td>
+                      <td className="px-4 py-2 text-[12px]">
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${req === "Yes" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>{req}</span>
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground text-[13px]">{desc}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            <H3 id="contributing">How to contribute</H3>
-            <P>Fork the repo, create your branch, implement the checklist above, open a PR. All PRs require one review before merge.</P>
+            <H3 id="sdk-folder-structure">Repository structure for a new SDK</H3>
+            <CodeBlock filename="sdk/python/" code={`sdk/<language>/
+├── README.md          # install + quickstart for this language
+├── src/               # source code
+├── tests/             # test suite (see test coverage below)
+└── <package config>   # pubspec.yaml / pyproject.toml / go.mod / etc.`} />
+
+            <H3 id="sdk-test-coverage">Test coverage required</H3>
+            <P>Every SDK PR must include tests covering these cases:</P>
+            <CodeBlock filename="test-cases.txt" code={`✓ ask — successful response parsing
+✓ ask — stateless (no conversationId → empty string returned)
+✓ testKey — parse organizationId + scopes
+✓ knowledge.create — create + parse response
+✓ knowledge.list — list parsing
+✓ knowledge.delete — 204 handling
+✓ Network error (connection refused) → FluxChatNetworkError
+✓ 401 Unauthorized → FluxChatApiError(401)
+✓ 403 Forbidden (missing scope) → FluxChatApiError(403)`} />
+
+            <H3 id="sdk-examples">Minimal ask() — language examples</H3>
+            <CodeBlock filename="sdk/python/fluxchat.py" code={`import httpx
+from dataclasses import dataclass
+
+BASE_URL = "https://dev-api.fluxchat-corp.com/api/v2"
+
+@dataclass
+class AskResponse:
+    reply: str
+    conversation_id: str
+
+class FluxChatApiError(Exception):
+    def __init__(self, status: int, message: str):
+        self.status = status
+        super().__init__(f"FluxChat API {status}: {message}")
+
+class FluxChat:
+    def __init__(self, api_key: str, base_url: str = BASE_URL):
+        self._headers = {"X-API-Key": api_key, "Content-Type": "application/json"}
+        self.base_url = base_url.rstrip("/")
+
+    def ask(self, message: str, *, context: str | None = None,
+            conversation_id: str | None = None) -> AskResponse:
+        payload: dict = {"message": message}
+        if context:     payload["context"] = context
+        if conversation_id: payload["conversationId"] = conversation_id
+        with httpx.Client() as c:
+            r = c.post(f"{self.base_url}/public/bot/ask",
+                       json=payload, headers=self._headers)
+        if not r.is_success:
+            raise FluxChatApiError(r.status_code, r.text)
+        data = r.json()["data"]
+        return AskResponse(reply=data["reply"],
+                           conversation_id=data.get("conversationId", ""))
+
+    def capture_page(self, url: str, title: str, content: str) -> None:
+        with httpx.Client() as c:
+            c.post(f"{self.base_url}/public/bot/pages",
+                   json={"url": url, "title": title, "content": content[:6000]},
+                   headers=self._headers)`} />
+            <CodeBlock filename="sdk/go/client.go" code={`package fluxchat
+
+import (
+    "bytes"; "encoding/json"; "fmt"; "net/http"
+)
+
+const defaultBaseURL = "https://dev-api.fluxchat-corp.com/api/v2"
+
+type Client struct { apiKey, baseURL string; http *http.Client }
+
+type AskOptions struct {
+    Message        string \`json:"message"\`
+    Context        string \`json:"context,omitempty"\`
+    ConversationID string \`json:"conversationId,omitempty"\`
+}
+type AskResponse struct {
+    Reply          string \`json:"reply"\`
+    ConversationID string \`json:"conversationId"\`
+}
+
+func New(apiKey string) *Client {
+    return &Client{apiKey: apiKey, baseURL: defaultBaseURL, http: &http.Client{}}
+}
+
+func (c *Client) Ask(opts AskOptions) (*AskResponse, error) {
+    body, _ := json.Marshal(opts)
+    req, _ := http.NewRequest("POST", c.baseURL+"/public/bot/ask", bytes.NewReader(body))
+    req.Header.Set("X-API-Key", c.apiKey)
+    req.Header.Set("Content-Type", "application/json")
+    resp, err := c.http.Do(req)
+    if err != nil { return nil, fmt.Errorf("network: %w", err) }
+    defer resp.Body.Close()
+    if resp.StatusCode >= 400 { return nil, fmt.Errorf("api error %d", resp.StatusCode) }
+    var env struct{ Data AskResponse \`json:"data"\` }
+    json.NewDecoder(resp.Body).Decode(&env)
+    return &env.Data, nil
+}`} />
+            <CodeBlock filename="sdk/dart/fluxchat.dart" code={`import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+class FluxChat {
+  final String apiKey;
+  final String baseUrl;
+  FluxChat({required this.apiKey,
+            this.baseUrl = 'https://dev-api.fluxchat-corp.com/api/v2'});
+
+  Future<Map<String, dynamic>> ask(String message,
+      {String? context, String? conversationId}) async {
+    final body = <String, dynamic>{'message': message};
+    if (context != null) body['context'] = context;
+    if (conversationId != null) body['conversationId'] = conversationId;
+    final r = await http.post(
+      Uri.parse('$baseUrl/public/bot/ask'),
+      headers: {'X-API-Key': apiKey, 'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+    if (r.statusCode >= 400) throw Exception('FluxChat \${r.statusCode}: \${r.body}');
+    final data = jsonDecode(r.body)['data'];
+    return {'reply': data['reply'], 'conversationId': data['conversationId'] ?? ''};
+  }
+
+  Future<void> capturePage(String url, String title, String content) =>
+    http.post(Uri.parse('$baseUrl/public/bot/pages'),
+      headers: {'X-API-Key': apiKey, 'Content-Type': 'application/json'},
+      body: jsonEncode({'url': url, 'title': title,
+                        'content': content.substring(0, content.length.clamp(0, 6000))}));
+}`} />
+
+            <H3 id="contributing">How to contribute — workflow</H3>
             <CodeBlock filename="terminal" code={`# 1. Fork on GitHub, then clone your fork
 git clone https://github.com/YOUR_USERNAME/fluxchat-sdk.git
 cd fluxchat-sdk
 
-# 2. Create your branch
-git checkout -b sdk/dart   # replace 'dart' with your language
+# 2. Create your branch (sdk/<language> for new SDKs)
+git checkout -b sdk/python
 
-# 3. Create sdk/<language>/ with your code + README + tests
+# 3. Create sdk/python/ with:
+#    - README.md (install + quickstart)
+#    - src/       (your implementation)
+#    - tests/     (required test coverage — see above)
+#    - pyproject.toml / go.mod / pubspec.yaml / etc.
 
 # 4. Push and open a PR against main
-git push origin sdk/dart`} />
-            <Callout>Read <a className="text-primary" href="https://github.com/benflux-company/fluxchat-sdk/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">CONTRIBUTING.md</a> for the full guide — required files, test expectations, and PR rules.</Callout>
+git push origin sdk/python
+# → open PR at github.com/benflux-company/fluxchat-sdk`} />
+            <P>
+              Branch naming: <Code>sdk/&lt;language&gt;</Code> for new SDKs, <Code>feat/&lt;description&gt;</Code> for features, <Code>fix/&lt;description&gt;</Code> for bugs.
+              All PRs require one review by <a className="text-primary" href="https://github.com/benbaruka" target="_blank" rel="noreferrer">@benbaruka</a> before merge.
+            </P>
+            <Callout>Full guide (pipeline details, autoCapture for mobile, error contracts): <a className="text-primary" href="https://github.com/benflux-company/fluxchat-sdk/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">CONTRIBUTING.md →</a></Callout>
 
             <H2 id="contributing-js">Contributing to the JS SDK</H2>
             <P>FluxChat SDK is open source (MIT) on <a className="text-primary" href="https://github.com/benflux-company/fluxchat-sdk" target="_blank" rel="noreferrer">GitHub</a>. Bug fixes and improvements are welcome.</P>
             <CodeBlock filename="terminal" code={`git clone https://github.com/benflux-company/fluxchat-sdk
 cd fluxchat-sdk && npm install
-npm run build   # tsup → ESM + CJS + types + CLI + widget
-npm test        # vitest`} />
+npm run build   # tsup → ESM + CJS + types + CLI + IIFE widget
+npm test        # vitest
+npm run typecheck`} />
+            <H3>Source structure</H3>
+            <CodeBlock filename="src/" code={`src/
+├── index.ts            # main SDK entry (FluxChatClient, errors)
+├── client.ts           # HTTP client
+├── knowledge.ts        # KB CRUD
+├── config.ts           # persona config
+├── cli/
+│   └── index.ts        # CLI commands (ask, test, kb, config)
+└── widget/
+    ├── widget.ts        # embeddable widget — DOM, SPA capture, autocorrect
+    ├── types.ts         # WidgetOptions, WidgetInstance interfaces
+    └── styles.ts        # CSS-in-JS widget styles`} />
           </VersionProvider>
 
           <Footer />
