@@ -56,13 +56,22 @@ export function DocsSidebar() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const sections = SIDEBAR.flatMap((g) => g.items).map((i) => document.getElementById(i.id)).filter((el): el is HTMLElement => el !== null);
-    const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
-      { rootMargin: "-10% 0px -80% 0px" },
-    );
-    sections.forEach((s) => obs.observe(s));
-    return () => obs.disconnect();
+    const ids = SIDEBAR.flatMap((g) => g.items).map((i) => i.id);
+
+    const onScroll = () => {
+      for (let i = ids.length - 1; i >= 0; i--) {
+        const el = document.getElementById(ids[i]);
+        if (el && el.getBoundingClientRect().top <= 120) {
+          setActive(ids[i]);
+          return;
+        }
+      }
+      setActive(ids[0]);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
