@@ -112,7 +112,7 @@ const { reply } = await fluxchat.ask({
   context: \`Plan: \${user.plan}. Open tickets: \${tickets.length}.\`,
 });`} />
 
-            <H2 id="assistant">AI assistant</H2>
+            <H2 id="assistant">FluxChat AI assistant</H2>
             <P>Use the same kit as a general assistant: a persona you control, grounded on your knowledge base, with continuity when you pass a <Code>conversationId</Code>.</P>
             <ul className="mt-4 list-disc space-y-1.5 pl-5 text-[15px] text-muted-foreground">
               <li><b>Stateless</b> by default for public widgets — nothing stored unless you keep a <Code>conversationId</Code>.</li>
@@ -124,10 +124,10 @@ const { reply } = await fluxchat.ask({
 
             {/* ── Architecture ─────────────────────────────────── */}
             <H2 id="architecture">Architecture</H2>
-            <P>FluxChat is a three-layer system: your <b>browser / app</b>, the <b>FluxChat Gateway</b> (NestJS, multi-tenant PostgreSQL, Redis), and an <b>AI provider</b> that never surfaces to end-users.</P>
+            <P>FluxChat is a three-layer system: your <b>browser / app</b>, the <b>FluxChat Gateway</b> (NestJS, multi-tenant PostgreSQL, Redis), and <b>FluxChat AI</b> that never surfaces to end-users.</P>
 
             <div className="mt-6 overflow-x-auto rounded-xl border border-border bg-muted/30 p-5 font-mono text-[12px] leading-relaxed text-muted-foreground">
-              <pre>{`Browser / App                  FluxChat Gateway              AI Provider
+              <pre>{`Browser / App                  FluxChat Gateway              FluxChat AI
 ─────────────────────────────────────────────────────────────────────
 1. User visits page
    SDK auto-captures DOM ──────► POST /bot/pages
@@ -146,7 +146,7 @@ const { reply } = await fluxchat.ask({
                                      │    = persona + KB context
                                      │      + live context + history
                                      │
-                                     │ 6. Call AI ─────────────────►
+                                     │ 6. Call FluxChat AI ────────►
                                      │ ◄── reply ──────────────────┘
 4. ◄── reply ◄─────────────────────┘`}</pre>
             </div>
@@ -162,10 +162,10 @@ const { reply } = await fluxchat.ask({
                   {[
                     ["Widget SDK", "Embeddable JS bundle — captures context, sends messages, renders the chat UI."],
                     ["Gateway /bot/pages", "Receives captures (page DOM, API JSON, localStorage). Stores in bot_session_page (24h TTL) and triggers async KB extraction."],
-                    ["extractAndLearn", "Background job per capture — calls the AI to extract structured knowledge (title, content, category, keywords) and upserts it permanently into bot_knowledge."],
+                    ["extractAndLearn", "Background job per capture — FluxChat AI extracts structured knowledge (title, content, category, keywords) and upserts it permanently into bot_knowledge."],
                     ["bot_knowledge", "Permanent, searchable knowledge base per tenant schema. Source of truth for the bot."],
                     ["bot_session_page", "Short-lived live captures (24h). Searched first — highest priority, most recent data."],
-                    ["Gateway /bot/ask", "Combines KB search results + context + conversation history into a system prompt, then calls the AI."],
+                    ["Gateway /bot/ask", "Combines KB search results + context + conversation history into a system prompt, then calls FluxChat AI."],
                     ["Strict mode", "When enabled, the bot only answers from bot_knowledge. Off by default — bot falls back to general knowledge."],
                   ].map(([layer, desc]) => (
                     <tr key={String(layer)} className="border-t border-border">
@@ -185,8 +185,8 @@ const { reply } = await fluxchat.ask({
               <H3>Stage 1 — Ingest (immediate)</H3>
               <P>The widget POSTs the raw content to <Code>/api/v2/public/bot/pages</Code>. The Gateway stores it in <Code>bot_session_page</Code> (24-hour TTL) and makes it <b>instantly searchable</b> — the bot can answer questions about it right away.</P>
 
-              <H3>Stage 2 — Extract (async, AI-powered)</H3>
-              <P>For each new or changed capture, the Gateway calls the AI to extract structured knowledge:</P>
+              <H3>Stage 2 — Extract (async, FluxChat AI)</H3>
+              <P>For each new or changed capture, FluxChat AI extracts structured knowledge:</P>
               <CodeBlock filename="extracted-entry.json" code={`{
   "title": "Bengali Chicken Curry",
   "content": "Chicken curry from Bengal. Ingredients: 4 chicken breasts…",
@@ -285,7 +285,7 @@ init({
   └─────────────────────────────────────────────────┘`}</pre>
               </div>
 
-              <P>The correction never mentions the underlying AI — the UI label reads <b>"Correction suggérée"</b>. No configuration required; the feature is always active in the widget.</P>
+              <P>The correction is powered by FluxChat AI — the UI label reads <b>"Correction suggérée"</b>. No configuration required; the feature is always active in the widget.</P>
               <Callout><b>Ghost text:</b> If the corrected text starts with what the user already typed, the missing suffix is shown inline as grey ghost text — same UX as mobile autocomplete. Accept with <Code>Tab</Code> or <Code>→</Code> at the end of the input.</Callout>
             </V2Only>
 

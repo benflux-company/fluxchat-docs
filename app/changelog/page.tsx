@@ -23,9 +23,9 @@ const RELEASES = [
       "Widget: localStorage snapshot capture on load — user session data (excluding auth/token keys) is captured as context.",
       "Widget: sendCapture() uses fetch keepalive:true instead of sendBeacon (supports custom X-API-Key header).",
       "Widget: client-side FNV-1a hash dedup — same-content captures are not re-sent.",
-      "Gateway: auto-KB learning — after each capture, the AI gateway automatically extracts structured knowledge (title, content, category, keywords) and stores it permanently in bot_knowledge (source='auto').",
+      "Gateway: auto-KB learning — after each capture, FluxChat AI automatically extracts structured knowledge (title, content, category, keywords) and stores it permanently in bot_knowledge (source='auto').",
       "Gateway: content-change refresh — when captured content hash changes, stale auto-KB entry is deleted and re-extracted.",
-      "Gateway: extraction concurrency limiter (max 2 per org) prevents AI API bursts on first visit.",
+      "Gateway: extraction concurrency limiter (max 2 per org) prevents FluxChat AI bursts on first visit.",
     ],
   },
   {

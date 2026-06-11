@@ -172,7 +172,7 @@ export default function App() {
         ↓
 Gateway stores raw capture (bot_session_page, TTL 1h)
         ↓  [fire-and-forget, max 2 concurrent per org]
-AI gateway extracts:
+FluxChat AI extracts:
   • title      — "Services and pricing — Acme Corp"
   • content    — "Acme offers web dev ($500–2000), SEO ($300/mo)…"
   • category   — pricing | product | contact | support | …
