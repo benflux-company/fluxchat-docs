@@ -41,9 +41,13 @@ export const SIDEBAR: { group: string; items: { id: string; label: string }[] }[
     { id: "sdk-test-coverage", label: "Test coverage" },
     { id: "sdk-examples", label: "Code examples" },
     { id: "contributing", label: "How to contribute" },
+    { id: "bot-pipeline", label: "Bot pipeline" },
+    { id: "priority-order", label: "Context priority" },
+    { id: "zero-config-sdk", label: "Zero-config (mobile)" },
   ] },
   { group: "Project", items: [
     { id: "contributing-js", label: "JS SDK — Contributing" },
+    { id: "contributors", label: "Contributors" },
   ] },
 ];
 

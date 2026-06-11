@@ -898,7 +898,127 @@ git push origin sdk/python
               Branch naming: <Code>sdk/&lt;language&gt;</Code> for new SDKs, <Code>feat/&lt;description&gt;</Code> for features, <Code>fix/&lt;description&gt;</Code> for bugs.
               All PRs require one review by <a className="text-primary" href="https://github.com/benbaruka" target="_blank" rel="noreferrer">@benbaruka</a> before merge.
             </P>
-            <Callout>Full guide (pipeline details, autoCapture for mobile, error contracts): <a className="text-primary" href="https://github.com/benflux-company/fluxchat-sdk/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">CONTRIBUTING.md →</a></Callout>
+            <H3 id="bot-pipeline">The bot pipeline — how a message becomes a reply</H3>
+            <P>Understanding this pipeline is required to build a correct SDK. Here is exactly what happens on every <Code>POST /public/bot/ask</Code>:</P>
+            <CodeBlock filename="pipeline.txt" code={`User message → POST /public/bot/ask
+        │
+        ▼
+1. Authenticate X-API-Key → resolve organizationId + org config (strictMode, persona)
+        │
+        ▼
+2. Upsert per-request context into bot_session_page (BEFORE stateless check)
+        │
+        ▼
+3. Stateless check: no conversationId → skip DB load, reply won't be persisted
+        │
+        ▼
+4. Build knowledge context
+   a. ILIKE search in bot_knowledge  (permanent KB articles)
+   b. ILIKE search in bot_session_page  (passively captured pages)
+        │
+        ▼
+5. Intent detection (pattern match) → if matched, call org API/DB for live data
+        │
+        ▼
+6. Build system prompt
+   = persona (name, tone, style rules)
+   + anti-hallucination rule (conditional on strictMode)
+   + KB context (step 4a)
+   + session page context (step 4b)
+   + live action data (step 5)  ← highest priority
+   + per-request context (from SDK)
+        │
+        ▼
+7. FluxChat AI call
+        │
+        ▼
+8. Return { reply, conversationId }   ← conversationId is "" if stateless`} />
+            <H3 id="priority-order">Context priority order (highest → lowest)</H3>
+            <div className="mt-4 overflow-hidden rounded-xl border border-border">
+              <table className="w-full text-sm">
+                <thead><tr className="bg-muted/40 text-left text-muted-foreground">
+                  <th className="px-4 py-2 font-medium w-8">#</th>
+                  <th className="px-4 py-2 font-medium">Source</th>
+                  <th className="px-4 py-2 font-medium">What it is</th>
+                </tr></thead>
+                <tbody>
+                  {[
+                    ["1", "Action data", "Live DB/API result from intent detection — absolute source of truth"],
+                    ["2", "Per-request context", "Injected by SDK per message — page content, user info, live platform data"],
+                    ["3", "KB articles", "Curated by admins — permanent, structured knowledge"],
+                    ["4", "Session pages", "Passively captured by SDK autoCapture — immediate, no admin needed"],
+                    ["5", "FluxChat AI general knowledge", "Used only when nothing above matches AND strictMode is off"],
+                  ].map(([n, src, desc]) => (
+                    <tr key={String(n)} className="border-t border-border">
+                      <td className="px-4 py-2 font-bold text-primary">{n}</td>
+                      <td className="px-4 py-2 font-semibold">{src}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{desc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <H3 id="zero-config-sdk">Zero-config features — implementing in non-JS SDKs</H3>
+            <P><b>autoCapture on mobile / desktop (Flutter, Swift, Kotlin, React Native):</b> instead of DOM interception, expose a manual API and call it from screen lifecycle hooks.</P>
+            <CodeBlock filename="mobile-capture.dart" code={`// Flutter — call when a new screen loads
+@override
+void initState() {
+  super.initState();
+  FluxChat.capturePage(
+    url: 'app://my-app/\${widget.routeName}',
+    title: widget.title,
+    content: extractVisibleText(),   // serialize the screen's visible text
+  );
+}`} />
+            <CodeBlock filename="mobile-capture-rn.js" code={`// React Native — call on screen focus
+useEffect(() => {
+  fluxchat.capturePage({
+    url: \`app://my-app/\${route.name}\`,
+    title: route.params?.title ?? route.name,
+    content: extractScreenText(),
+  });
+}, [route]);`} />
+            <P><b>autoContext — what to inject per request:</b></P>
+            <CodeBlock filename="context-contract.txt" code={`Priority order when building the context string:
+1. window.fluxchatContext (or platform equivalent) — user, org, any runtime data
+2. data-fluxchat="…" attributes on DOM / screen elements
+3. Screen title + current URL / route
+4. Visible text from the main content area (first message only, max 3000 chars)
+
+Rules:
+- Set persistent data (user, org) once at app root, not per screen
+- Always MERGE page-specific data — never overwrite the full object
+- Clean up page-specific keys on screen unmount
+- DOM / screen scraping only on first message — subsequent messages use context only`} />
+            <P><b>HTTP status codes — what your SDK must handle:</b></P>
+            <div className="mt-4 overflow-hidden rounded-xl border border-border">
+              <table className="w-full text-sm">
+                <thead><tr className="bg-muted/40 text-left text-muted-foreground">
+                  <th className="px-4 py-2 font-medium">Status</th>
+                  <th className="px-4 py-2 font-medium">Meaning</th>
+                  <th className="px-4 py-2 font-medium">Throw</th>
+                </tr></thead>
+                <tbody>
+                  {[
+                    ["401", "Invalid or missing API key", "FluxChatApiError(401)"],
+                    ["403", "Valid key, missing scope (e.g. bot:write for KB writes)", "FluxChatApiError(403)"],
+                    ["404", "Resource not found (knowledge article ID doesn't exist)", "FluxChatApiError(404)"],
+                    ["422", "Validation error (message too long, missing required field)", "FluxChatApiError(422)"],
+                    ["5xx", "Server error", "FluxChatApiError(status)"],
+                    ["network", "Connection refused, timeout, DNS failure", "FluxChatNetworkError"],
+                  ].map(([status, meaning, error]) => (
+                    <tr key={String(status)} className="border-t border-border">
+                      <td className="px-4 py-2 font-mono text-[12px] text-primary">{status}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{meaning}</td>
+                      <td className="px-4 py-2 font-mono text-[11px]">{error}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <Callout>Source of truth: <a className="text-primary" href="https://github.com/benflux-company/fluxchat-sdk/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">CONTRIBUTING.md on GitHub →</a></Callout>
 
             <H2 id="contributing-js">Contributing to the JS SDK</H2>
             <P>FluxChat SDK is open source (MIT) on <a className="text-primary" href="https://github.com/benflux-company/fluxchat-sdk" target="_blank" rel="noreferrer">GitHub</a>. Bug fixes and improvements are welcome.</P>
@@ -919,6 +1039,47 @@ npm run typecheck`} />
     ├── widget.ts        # embeddable widget — DOM, SPA capture, autocorrect
     ├── types.ts         # WidgetOptions, WidgetInstance interfaces
     └── styles.ts        # CSS-in-JS widget styles`} />
+            <H2 id="contributors">Contributors</H2>
+            <P>People who built and maintain FluxChat. Want to join? Open an issue or submit a PR on <a className="text-primary" href="https://github.com/benflux-company/fluxchat-sdk" target="_blank" rel="noreferrer">GitHub</a>.</P>
+            <div className="mt-6 flex flex-wrap gap-4">
+              {[
+                {
+                  login: "benbaruka",
+                  name: "Ben Baruka",
+                  role: "Creator & maintainer",
+                  github: "https://github.com/benbaruka",
+                  avatar: "https://github.com/benbaruka.png",
+                },
+              ].map((c) => (
+                <a
+                  key={c.login}
+                  href={c.github}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 rounded-xl border border-border bg-muted/30 px-4 py-3 hover:bg-muted/60 transition-colors"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={c.avatar} alt={c.name} width={40} height={40} className="rounded-full" />
+                  <div>
+                    <p className="text-sm font-semibold">{c.name}</p>
+                    <p className="text-[12px] text-muted-foreground">{c.role}</p>
+                  </div>
+                </a>
+              ))}
+              <a
+                href="https://github.com/benflux-company/fluxchat-sdk/issues"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 rounded-xl border border-dashed border-border px-4 py-3 hover:bg-muted/40 transition-colors"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-border text-xl text-muted-foreground">+</div>
+                <div>
+                  <p className="text-sm font-semibold">You?</p>
+                  <p className="text-[12px] text-muted-foreground">Contribute an SDK</p>
+                </div>
+              </a>
+            </div>
+
           </VersionProvider>
 
           <Footer />
