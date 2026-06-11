@@ -5,6 +5,42 @@ export const metadata: Metadata = { title: "Changelog" };
 
 const RELEASES = [
   {
+    version: "0.1.7", date: "2026-06-11", heading: "Added",
+    items: [
+      "Widget: universal API interception — fetch() and XMLHttpRequest GET JSON responses are automatically captured and sent to the bot knowledge base.",
+      "Widget: localStorage snapshot capture on load — user session data (excluding auth/token keys) is captured as context.",
+      "Widget: sendCapture() uses fetch keepalive:true instead of sendBeacon (supports custom X-API-Key header).",
+      "Widget: client-side FNV-1a hash dedup — same-content captures are not re-sent.",
+      "Gateway: auto-KB learning — after each capture, Mistral automatically extracts structured knowledge (title, content, category, keywords) and stores it permanently in bot_knowledge (source='auto').",
+      "Gateway: content-change refresh — when captured content hash changes, stale auto-KB entry is deleted and re-extracted.",
+      "Gateway: extraction concurrency limiter (max 2 per org) prevents Mistral API bursts on first visit.",
+    ],
+  },
+  {
+    version: "0.1.6", date: "2026-06-09", heading: "Added",
+    items: [
+      "Widget: sessionId persistence in localStorage — bot session memory survives page reloads.",
+      "Widget: follow-up context retention — lastPlatformData reused for short follow-up questions ('which one?', 'tell me more').",
+      "Widget: page link capture — internal <a href> links appended to DOM capture for navigation context.",
+    ],
+  },
+  {
+    version: "0.1.5", date: "2026-06-08", heading: "Added",
+    items: [
+      "Widget: autoCapture — passive DOM capture on every page visit via History API interception.",
+      "Widget: platformApi — auto-discover and query host platform REST API for live data.",
+      "Widget: per-org customisable assistant name, greeting, colours, and position.",
+    ],
+  },
+  {
+    version: "0.1.4", date: "2026-06-07", heading: "Added",
+    items: [
+      "Gateway: Redis session memory for stateless (public widget) mode — bot remembers the last 10 exchanges across page navigations (TTL 2h).",
+      "Gateway: anti-hallucination prompt reinforcement with few-shot examples.",
+      "Gateway: forceStrict mode for public widget — bot refuses to answer out-of-scope questions.",
+    ],
+  },
+  {
     version: "0.1.3", date: "2026-06-05", heading: "Changed",
     items: [
       "SDK & widget now default to API v2 (/api/v2) — required for per-request context (v1 rejects it).",

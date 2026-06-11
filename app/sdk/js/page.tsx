@@ -27,6 +27,7 @@ const NAV_ITEMS = [
   { id: "quickstart", label: "Quickstart" },
   { id: "widget", label: "Widget (browser)" },
   { id: "autocapture", label: "autoCapture" },
+  { id: "autokb", label: "Auto-KB learning" },
   { id: "platformapi", label: "platformApi (live data)" },
   { id: "context", label: "User context injection" },
   { id: "frameworks", label: "Framework setup" },
@@ -65,7 +66,7 @@ export default function JsSDKPage() {
               <h1 className="mt-1 text-4xl font-extrabold tracking-tight">JavaScript / TypeScript SDK</h1>
             </div>
             <span className="mt-2 rounded-full bg-green-500/10 px-3 py-1 text-[12px] font-medium text-green-600 dark:text-green-400">
-              v0.1.5 · Stable
+              v0.1.7 · Stable
             </span>
           </div>
           <P>
@@ -112,7 +113,7 @@ export default function App() {
 
           <H2 id="autocapture">autoCapture — zero-config site intelligence</H2>
           <P>
-            From v0.1.5, the widget passively captures every page the user visits and stores it in FluxChat. The bot can instantly answer questions about any content on your site — no admin setup, no KB imports, no crawl commands.
+            From v0.1.5, the widget passively captures every page the user visits. From <strong>v0.1.7</strong>, it also intercepts all <Code>fetch()</Code> and <Code>XMLHttpRequest</Code> GET responses (JSON only) and snapshots <Code>localStorage</Code> — giving the bot full awareness of your app's live data with zero configuration.
           </P>
           <CodeBlock filename="any-site.html" code={`<!-- That's it. autoCapture is true by default. -->
 <script src="https://cdn.jsdelivr.net/npm/@fluxchat_sdk/sdk/dist/widget.global.js"></script>
@@ -120,14 +121,46 @@ export default function App() {
   FluxChatWidget.init({ apiKey: 'fc_live_xxx' });
 </script>
 
-<!-- User visits /about → captured
-     User visits /sermons → captured
-     User asks "what are the latest sermons?" → bot answers from captured content -->`} />
+<!-- What gets captured automatically (v0.1.7+):
+     ✓ Page DOM text  — every URL visited (once per session)
+     ✓ fetch() GET    — JSON API responses (/api/clients, /api/products, …)
+     ✓ XHR GET        — same filtering as fetch
+     ✓ localStorage   — user session data (auth/token keys excluded)
+
+     User visits /dashboard → API calls intercepted
+     User asks "how many clients do we have?" → bot reads captured API data -->`} />
           <P>
-            Works on <strong>static HTML, WordPress, React Router, Vue Router, Angular, Next.js</strong> — any site. SPA navigation is intercepted via <Code>pushState</Code> / <Code>replaceState</Code> / <Code>popstate</Code> / <Code>hashchange</Code>. Each unique URL is captured once per browser session.
+            Works on <strong>static HTML, WordPress, React Router, Vue Router, Angular, Next.js</strong> — any site. SPA navigation is intercepted via <Code>pushState</Code> / <Code>replaceState</Code> / <Code>popstate</Code> / <Code>hashchange</Code>. Captured data is deduplicated by content hash — re-visiting a page with unchanged content does not send a duplicate.
           </P>
           <P>
-            Set <Code>autoCapture: false</Code> only if you populate the knowledge base yourself (admin import or crawl).
+            Auto-filtered: auth endpoints (<Code>/login</Code>, <Code>/token</Code>, <Code>/refresh</Code>), static assets, images, and binary responses are never captured.
+          </P>
+          <P>
+            Set <Code>autoCapture: false</Code> only if you populate the knowledge base manually (admin import or crawl).
+          </P>
+
+          <H2 id="autokb">Auto-KB learning — permanent knowledge from captures</H2>
+          <P>
+            From <strong>v0.1.7</strong>, the FluxChat gateway automatically extracts structured knowledge from every capture and stores it permanently in your organization&apos;s knowledge base — no TTL, no re-fetching needed.
+          </P>
+          <CodeBlock filename="flow.txt" code={`SDK captures page / API response
+        ↓
+Gateway stores raw capture (bot_session_page, TTL 1h)
+        ↓  [fire-and-forget, max 2 concurrent per org]
+Mistral extracts:
+  • title      — "Services and pricing — Acme Corp"
+  • content    — "Acme offers web dev ($500–2000), SEO ($300/mo)…"
+  • category   — pricing | product | contact | support | …
+  • keywords   — ["web dev", "SEO", "pricing", "Acme"]
+        ↓
+Stored in bot_knowledge (source = 'auto', permanent)
+        ↓
+Bot answers from permanent KB — even after 1h session TTL expires`} />
+          <P>
+            <strong>Content-change refresh:</strong> if the same URL is captured again with different content (e.g. your client list grew), the stale auto-KB entry is replaced automatically. The hash is compared — unchanged content is a no-op.
+          </P>
+          <P>
+            Auto-generated entries are tagged <Code>source: &apos;auto&apos;</Code> in the knowledge base and can be reviewed, edited, or deleted from the admin panel like any manual entry.
           </P>
 
           <H2 id="platformapi">platformApi — live data from your own API</H2>
