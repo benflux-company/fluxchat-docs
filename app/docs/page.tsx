@@ -740,7 +740,7 @@ fluxchat kb crawl --url https://acme.com/sitemap.xml --sitemap --max-pages 20`} 
                 </tbody>
               </table>
             </div>
-            <P className="text-xs text-muted-foreground">This table is updated when a PR is merged. Contributors write their documentation in <Code>sdk/&lt;language&gt;/README.md</Code> — no need to modify this site.</P>
+            <Callout>This table is updated when a PR is merged. Contributors write their documentation in <Code>sdk/&lt;language&gt;/README.md</Code> — no need to modify this site.</Callout>
 
             {/* ── Sandbox ─────────────────────────────────── */}
             <H2 id="sandbox">Developer Sandbox</H2>
