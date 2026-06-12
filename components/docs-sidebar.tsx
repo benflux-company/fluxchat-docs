@@ -35,6 +35,8 @@ export const SIDEBAR: { group: string; items: { id: string; label: string }[] }[
   ] },
   { group: "For Developers", items: [
     { id: "for-devs", label: "Build an SDK" },
+    { id: "sandbox", label: "Sandbox credentials" },
+    { id: "sandbox-verify", label: "Verify your capture" },
     { id: "api-reference", label: "REST API reference" },
     { id: "sdk-checklist", label: "Implementation checklist" },
     { id: "sdk-folder-structure", label: "Folder structure" },

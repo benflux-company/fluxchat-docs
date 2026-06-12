@@ -661,6 +661,108 @@ fluxchat kb crawl --url https://acme.com/sitemap.xml --sitemap --max-pages 20`} 
               </table>
             </div>
 
+            {/* ── Sandbox ─────────────────────────────────── */}
+            <H2 id="sandbox">Developer Sandbox</H2>
+            <P>
+              The sandbox is a real FluxChat organization reserved for contributors.
+              It has an active 1-year subscription — all features unlocked, no rate limit surprises.
+              Use it to test your SDK against the live API without creating your own account.
+            </P>
+
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/30">
+              <p className="mb-3 text-sm font-semibold text-amber-800 dark:text-amber-300">Sandbox credentials — public, do not use for production</p>
+              <div className="grid gap-2 text-sm font-mono">
+                <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">Dashboard</span><a className="text-primary hover:underline break-all" href="https://fluxchat-corp.com" target="_blank" rel="noreferrer">https://fluxchat-corp.com</a></div>
+                <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">Login</span><span className="break-all select-all">heyakaf832@ocuser.com</span></div>
+                <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">Password</span><span className="select-all">Test1234567890@</span></div>
+                <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">Org ID</span><span className="break-all select-all">ba134db3-993d-4076-8431-bb2c922d4db2</span></div>
+                <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">API Key</span><span className="break-all select-all text-xs">fc_prod_f45868df738ddbec537c6c929570f1dad830fb0ca0cd5f82652e9eb7db4ede16</span></div>
+                <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">Base URL</span><span className="break-all select-all">https://dev-api.fluxchat-corp.com/api/v2</span></div>
+              </div>
+            </div>
+
+            <Callout>The sandbox is shared — do not store personal data in it. Reset the KB anytime from the dashboard: <b>Bot → Knowledge base → Delete all</b>.</Callout>
+
+            {/* ── Verify capture ───────────────────────────── */}
+            <H2 id="sandbox-verify">Verifying your capture works</H2>
+            <P>
+              Testing <Code>capturePage</Code> is not just about getting a 204 back.
+              You need to prove the full pipeline ran end-to-end: the page arrived, FluxChat AI extracted the knowledge, and the bot uses it when answering.
+              Follow these 5 steps every time you test a capture.
+            </P>
+
+            <H3>Step 1 — Send a capture with a unique phrase</H3>
+            <P>Use a phrase that could not possibly come from the AI general knowledge — something invented and specific. This eliminates false positives.</P>
+            <CodeBlock filename="test-capture.http" code={`POST https://dev-api.fluxchat-corp.com/api/v2/public/bot/pages
+Content-Type: application/json
+X-API-Key: fc_prod_f45868df738ddbec537c6c929570f1dad830fb0ca0cd5f82652e9eb7db4ede16
+
+{
+  "url": "https://test.example.com/about",
+  "title": "About FluxTest",
+  "content": "FluxTest is a fictional company founded in 2099 by Zara Kowalski. Our slogan is: code never lies, only humans do."
+}`} />
+            <P><b>Expected response:</b></P>
+            <CodeBlock filename="response" code={`HTTP/1.1 204 No Content`} />
+            <P>204 means the capture was received and queued for extraction. The AI extraction runs async — wait ~5 seconds before the next step.</P>
+
+            <H3>Step 2 — Ask the bot about the unique phrase</H3>
+            <P>Now ask the bot something only answerable from that captured content.</P>
+            <CodeBlock filename="test-ask.http" code={`POST https://dev-api.fluxchat-corp.com/api/v2/public/bot/ask
+Content-Type: application/json
+X-API-Key: fc_prod_f45868df738ddbec537c6c929570f1dad830fb0ca0cd5f82652e9eb7db4ede16
+
+{
+  "message": "Who founded FluxTest and what is their slogan?"
+}`} />
+            <P><b>Expected response (proof that extraction worked):</b></P>
+            <CodeBlock filename="response.json" code={`{
+  "success": true,
+  "data": {
+    "reply": "FluxTest was founded in 2099 by Zara Kowalski. Their slogan is: code never lies, only humans do.",
+    "conversationId": "",
+    "confidence": 1
+  }
+}`} />
+            <P>If the bot answers with details from your captured page — your SDK works. If it says "I don't have this information", either the capture did not reach the server (check your request) or the extraction is still running (retry after 10 seconds).</P>
+
+            <H3>Step 3 — Confirm in the dashboard</H3>
+            <P>For a definitive proof, log in to the dashboard and check the knowledge base directly.</P>
+            <div className="mt-3 rounded-xl border border-border bg-muted/30 p-4 text-sm space-y-2">
+              <p><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground mr-2">1</span>Go to <a className="text-primary hover:underline font-medium" href="https://fluxchat-corp.com" target="_blank" rel="noreferrer">fluxchat-corp.com</a> and log in with the sandbox credentials above.</p>
+              <p><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground mr-2">2</span>In the left sidebar, click <b>Bot</b> then <b>Base de connaissances</b>.</p>
+              <p><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground mr-2">3</span>You should see an entry titled <b>"About FluxTest"</b> with the extracted content. If it appears — the full pipeline worked.</p>
+              <p><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground mr-2">4</span>If the entry is NOT there after 30 seconds, the extraction failed. Check that <Code>content</Code> was not empty and was under 6000 characters.</p>
+            </div>
+
+            <H3>Step 4 — Test context maintenance</H3>
+            <P>A correct SDK must also pass the same <Code>sessionId</Code> on every request. Without it, the bot loses context between messages. Verify it with two consecutive calls:</P>
+            <CodeBlock filename="test-context.http" code={`// Message 1 — introduce something
+POST /public/bot/ask
+{ "message": "My name is Zara.", "sessionId": "test-session-001" }
+→ bot: "Nice to meet you, Zara!"
+
+// Message 2 — same sessionId — test context retention
+POST /public/bot/ask
+{ "message": "What is my name?", "sessionId": "test-session-001" }
+→ bot: "Your name is Zara."   ← PASS
+
+// Message 2 — NO sessionId — test that context is correctly absent
+POST /public/bot/ask
+{ "message": "What is my name?", "sessionId": "test-session-002" }
+→ bot: "I don't have your name."   ← PASS (different session, no context)
+`} />
+            <Callout>If the second call with the same <Code>sessionId</Code> does NOT remember "Zara", your SDK is generating a new session ID per request instead of reusing the same one. Fix: generate the sessionId once (store in memory or localStorage) and reuse it for the entire session.</Callout>
+
+            <H3>Step 5 — What a failing capture looks like</H3>
+            <P>Know the difference between a bug in your SDK and an expected API error:</P>
+            <CodeBlock filename="error-cases.txt" code={`400 Bad Request   → missing required field (url, title, or content is empty)
+401 Unauthorized  → API key header missing or malformed
+403 Forbidden     → API key is valid but lacks bot:write scope (use the sandbox key above — it has all scopes)
+413               → content exceeds 6000 chars — truncate before sending
+204 but bot doesn't answer → content was received but extraction is still running — wait 10s and retry
+204 but entry missing from KB → content was too short or had no extractable facts (min ~50 words recommended)`} />
+
             <H3 id="api-reference">REST API — base URL</H3>
             <P>Base URL: <Code>https://dev-api.fluxchat-corp.com/api/v2</Code>. All public endpoints require <Code>X-API-Key: fc_prod_your_key</Code> in the request header.</P>
             <CodeBlock filename="ask.http" code={`POST /public/bot/ask
@@ -750,12 +852,38 @@ PATCH  /bot/config              { assistantName, tone, styleRules, strictMode }`
               </table>
             </div>
 
-            <H3 id="sdk-folder-structure">Repository structure for a new SDK</H3>
-            <CodeBlock filename="sdk/python/" code={`sdk/<language>/
-├── README.md          # install + quickstart for this language
-├── src/               # source code
-├── tests/             # test suite (see test coverage below)
-└── <package config>   # pubspec.yaml / pyproject.toml / go.mod / etc.`} />
+            <H3 id="sdk-folder-structure">Repository structure — monorepo layout</H3>
+            <P>The <Code>fluxchat-sdk</Code> repo is a monorepo. The root contains the official JS/TS SDK. Each community SDK lives in its own <Code>sdk/&lt;language&gt;/</Code> subdirectory — self-contained with its own package config, README and tests.</P>
+            <CodeBlock filename="fluxchat-sdk/" code={`fluxchat-sdk/               ← root = official JS/TS SDK (published to npm)
+├── src/
+├── dist/
+├── package.json
+├── README.md
+│
+├── sdk/                    ← community SDKs live here
+│   ├── python/             ← your contribution goes here
+│   │   ├── README.md       # install + quickstart for Python
+│   │   ├── src/
+│   │   ├── tests/
+│   │   └── pyproject.toml
+│   │
+│   ├── flutter/
+│   │   ├── README.md
+│   │   ├── lib/
+│   │   ├── test/
+│   │   └── pubspec.yaml
+│   │
+│   ├── go/
+│   │   ├── README.md
+│   │   ├── fluxchat.go
+│   │   ├── fluxchat_test.go
+│   │   └── go.mod
+│   │
+│   └── <your-stack>/       ← same pattern for every other language
+│       ├── README.md
+│       ├── src/
+│       ├── tests/
+│       └── <package config>`} />
 
             <H3 id="sdk-test-coverage">Test coverage required</H3>
             <P>Every SDK PR must include tests covering these cases:</P>
