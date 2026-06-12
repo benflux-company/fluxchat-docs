@@ -630,36 +630,117 @@ fluxchat kb crawl --url https://acme.com/sitemap.xml --sitemap --max-pages 20`} 
             <P>Sending <Code>context</Code> to v1 returns <Code>400</Code> — use v2 for context-aware answers.</P>
 
             <H2 id="for-devs">For Developers — Build an SDK</H2>
-            <P>The JS/TypeScript SDK is the reference implementation. Community SDKs for other languages are tracked as open GitHub issues — pick one, fork the repo, and submit a PR. All SDKs call the same REST API; no framework dependency is required.</P>
+            <P>
+              The JS/TypeScript SDK is the reference implementation. Community SDKs for other languages are tracked as open GitHub issues.
+              Pick one, fork the repo, work inside <Code>sdk/&lt;language&gt;/</Code>, and submit a PR.
+              All SDKs call the same REST API — no framework dependency required.
+              Documentation lives in each SDK&apos;s <Code>README.md</Code>; this table is updated when a PR is merged.
+            </P>
 
-            <H3>Open SDK issues</H3>
+            <H3 id="community-sdks">Community SDKs</H3>
             <div className="mt-4 overflow-hidden rounded-xl border border-border">
               <table className="w-full text-sm">
-                <thead><tr className="bg-muted/40 text-left text-muted-foreground">
-                  <th className="px-4 py-2 font-medium">Stack</th>
-                  <th className="px-4 py-2 font-medium">Branch</th>
-                  <th className="px-4 py-2 font-medium">Issue</th>
-                </tr></thead>
+                <thead>
+                  <tr className="bg-muted/40 text-left text-muted-foreground">
+                    <th className="px-4 py-2 font-medium">Stack</th>
+                    <th className="px-4 py-2 font-medium">Status</th>
+                    <th className="px-4 py-2 font-medium">README</th>
+                    <th className="px-4 py-2 font-medium">Issue</th>
+                    <th className="px-4 py-2 font-medium">Package</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {[
-                    { stack: "Python", branch: "sdk/python", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/1" },
-                    { stack: "PHP", branch: "sdk/php", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/2" },
-                    { stack: "Dart / Flutter", branch: "sdk/dart", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/3" },
-                    { stack: "Go", branch: "sdk/go", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/4" },
-                    { stack: "C# / .NET", branch: "sdk/dotnet", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/5" },
-                    { stack: "Swift (iOS / macOS)", branch: "sdk/swift", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/6" },
-                    { stack: "Kotlin (Android)", branch: "sdk/kotlin", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/7" },
-                    { stack: "React Native", branch: "sdk/react-native", issue: "https://github.com/benflux-company/fluxchat-sdk/issues/8" },
-                  ].map(({ stack, branch, issue }) => (
-                    <tr key={branch} className="border-t border-border">
+                  {([
+                    {
+                      stack: "JS / TypeScript",
+                      status: "available",
+                      readme: "https://github.com/benflux-company/fluxchat-sdk/blob/main/README.md",
+                      issue: null,
+                      pkg: { label: "npm", href: "https://www.npmjs.com/package/@fluxchat_sdk/sdk" },
+                    },
+                    {
+                      stack: "Python",
+                      status: "open",
+                      readme: "https://github.com/benflux-company/fluxchat-sdk/blob/main/sdk/python/README.md",
+                      issue: "https://github.com/benflux-company/fluxchat-sdk/issues/1",
+                      pkg: null,
+                    },
+                    {
+                      stack: "PHP",
+                      status: "open",
+                      readme: "https://github.com/benflux-company/fluxchat-sdk/blob/main/sdk/php/README.md",
+                      issue: "https://github.com/benflux-company/fluxchat-sdk/issues/2",
+                      pkg: null,
+                    },
+                    {
+                      stack: "Dart / Flutter",
+                      status: "open",
+                      readme: "https://github.com/benflux-company/fluxchat-sdk/blob/main/sdk/flutter/README.md",
+                      issue: "https://github.com/benflux-company/fluxchat-sdk/issues/3",
+                      pkg: null,
+                    },
+                    {
+                      stack: "Go",
+                      status: "open",
+                      readme: "https://github.com/benflux-company/fluxchat-sdk/blob/main/sdk/go/README.md",
+                      issue: "https://github.com/benflux-company/fluxchat-sdk/issues/4",
+                      pkg: null,
+                    },
+                    {
+                      stack: "C# / .NET",
+                      status: "open",
+                      readme: "https://github.com/benflux-company/fluxchat-sdk/blob/main/sdk/dotnet/README.md",
+                      issue: "https://github.com/benflux-company/fluxchat-sdk/issues/5",
+                      pkg: null,
+                    },
+                    {
+                      stack: "Swift (iOS / macOS)",
+                      status: "open",
+                      readme: "https://github.com/benflux-company/fluxchat-sdk/blob/main/sdk/swift/README.md",
+                      issue: "https://github.com/benflux-company/fluxchat-sdk/issues/6",
+                      pkg: null,
+                    },
+                    {
+                      stack: "Kotlin (Android)",
+                      status: "open",
+                      readme: "https://github.com/benflux-company/fluxchat-sdk/blob/main/sdk/kotlin/README.md",
+                      issue: "https://github.com/benflux-company/fluxchat-sdk/issues/7",
+                      pkg: null,
+                    },
+                    {
+                      stack: "React Native",
+                      status: "open",
+                      readme: "https://github.com/benflux-company/fluxchat-sdk/blob/main/sdk/react-native/README.md",
+                      issue: "https://github.com/benflux-company/fluxchat-sdk/issues/8",
+                      pkg: null,
+                    },
+                  ] as { stack: string; status: string; readme: string; issue: string | null; pkg: { label: string; href: string } | null }[]).map(({ stack, status, readme, issue, pkg }) => (
+                    <tr key={stack} className="border-t border-border">
                       <td className="px-4 py-2 font-medium">{stack}</td>
-                      <td className="px-4 py-2"><Code>{branch}</Code></td>
-                      <td className="px-4 py-2"><a className="text-primary hover:underline" href={issue} target="_blank" rel="noreferrer">View issue →</a></td>
+                      <td className="px-4 py-2">
+                        {status === "available" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">available</span>
+                        ) : status === "in progress" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">in progress</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">open</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2">
+                        <a className="text-primary hover:underline" href={readme} target="_blank" rel="noreferrer">README →</a>
+                      </td>
+                      <td className="px-4 py-2">
+                        {issue ? <a className="text-primary hover:underline" href={issue} target="_blank" rel="noreferrer">Claim →</a> : <span className="text-muted-foreground">—</span>}
+                      </td>
+                      <td className="px-4 py-2">
+                        {pkg ? <a className="text-primary hover:underline" href={pkg.href} target="_blank" rel="noreferrer">{pkg.label} →</a> : <span className="text-muted-foreground">—</span>}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            <P className="text-xs text-muted-foreground">This table is updated when a PR is merged. Contributors write their documentation in <Code>sdk/&lt;language&gt;/README.md</Code> — no need to modify this site.</P>
 
             {/* ── Sandbox ─────────────────────────────────── */}
             <H2 id="sandbox">Developer Sandbox</H2>
