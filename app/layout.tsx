@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/navbar";
+import { MobileSidebarProvider } from "@/components/mobile-sidebar-context";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
@@ -17,11 +18,11 @@ export const metadata: Metadata = {
   keywords: ["fluxchat", "sdk", "cli", "chatbot", "ai", "support", "widget", "knowledge base"],
   authors: [{ name: "Benflux", url: "https://benflux-corp.com" }],
   creator: "Benflux",
-  metadataBase: new URL("https://fluxchat-docs.vercel.app"),
+  metadataBase: new URL("https://docs.fluxchat-corp.com"),
   openGraph: {
     title: "FluxChat SDK",
     description: "Add an AI assistant or in-app support to any product.",
-    url: "https://fluxchat-docs.vercel.app",
+    url: "https://docs.fluxchat-corp.com",
     siteName: "FluxChat SDK",
     type: "website",
   },
@@ -40,8 +41,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${mono.variable}`}>
       <body className="font-sans">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <Navbar />
-          {children}
+          <MobileSidebarProvider>
+            <Navbar />
+            {children}
+          </MobileSidebarProvider>
         </ThemeProvider>
       </body>
     </html>

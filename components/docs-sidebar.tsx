@@ -1,7 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useMobileSidebar } from "@/components/mobile-sidebar-context";
+
+const MAIN_NAV = [
+  { href: "/", label: "Overview" },
+  { href: "/docs", label: "Docs" },
+  { href: "/sdk", label: "SDKs" },
+  { href: "/changelog", label: "Changelog" },
+];
 
 export const SIDEBAR: { group: string; items: { id: string; label: string }[] }[] = [
   { group: "Getting started", items: [
@@ -54,17 +64,53 @@ export const SIDEBAR: { group: string; items: { id: string; label: string }[] }[
   ] },
 ];
 
+const ALL_IDS = SIDEBAR.flatMap((g) => g.items).map((i) => i.id);
+
 export function DocsSidebar() {
   const [active, setActive] = useState("intro");
-  const [open, setOpen] = useState(false);
+  const { open, close } = useMobileSidebar();
+  const idsRef = useRef(ALL_IDS);
 
   useEffect(() => {
-    const ids = SIDEBAR.flatMap((g) => g.items).map((i) => i.id);
+    const ids = idsRef.current;
 
-    const onScroll = () => {
+    // Map from id → whether it's currently intersecting
+    const intersecting = new Map<string, boolean>(ids.map((id) => [id, false]));
+
+    const pick = () => {
+      // Return the first id (in document order) that is currently intersecting
+      for (const id of ids) {
+        if (intersecting.get(id)) {
+          setActive(id);
+          return;
+        }
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => intersecting.set(e.target.id, e.isIntersecting));
+        pick();
+      },
+      {
+        // top offset = navbar height (56 px = 3.5 rem) + a little breathing room
+        // bottom offset = only the top ~30% of the viewport triggers "active"
+        rootMargin: "-64px 0px -70% 0px",
+        threshold: 0,
+      },
+    );
+
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    // Fallback: if nothing is intersecting on load (page top), activate the first visible section
+    const syncOnScroll = () => {
+      if ([...intersecting.values()].some(Boolean)) return; // observer already has an active
       for (let i = ids.length - 1; i >= 0; i--) {
         const el = document.getElementById(ids[i]);
-        if (el && el.getBoundingClientRect().top <= 120) {
+        if (el && el.getBoundingClientRect().top <= 80) {
           setActive(ids[i]);
           return;
         }
@@ -72,38 +118,72 @@ export function DocsSidebar() {
       setActive(ids[0]);
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("scroll", syncOnScroll, { passive: true });
+    syncOnScroll();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", syncOnScroll);
+    };
   }, []);
+
+  const pathname = usePathname();
+
+  const sectionLinks = (
+    <div className="space-y-6">
+      {SIDEBAR.map((g) => (
+        <div key={g.group}>
+          <h4 className="mb-2 px-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{g.group}</h4>
+          {g.items.map((it) => (
+            <a
+              key={it.id}
+              href={`#${it.id}`}
+              onClick={() => { setActive(it.id); close(); }}
+              className={cn(
+                "block rounded-md px-2 py-1.5 text-[13.5px] transition-colors hover:bg-accent hover:text-foreground",
+                active === it.id
+                  ? "bg-primary/10 font-medium text-foreground"
+                  : "text-muted-foreground",
+              )}
+            >
+              {it.label}
+            </a>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="mb-4 inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground lg:hidden"
-      >
-        {open ? "Hide" : "Menu"}
-      </button>
-      <nav className={cn("space-y-6", open ? "block" : "hidden lg:block")}>
-        {SIDEBAR.map((g) => (
-          <div key={g.group}>
-            <h4 className="mb-2 px-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{g.group}</h4>
-            {g.items.map((it) => (
-              <a
-                key={it.id}
-                href={`#${it.id}`}
-                onClick={() => setOpen(false)}
-                className={cn(
-                  "block rounded-md px-2 py-1.5 text-[13.5px] transition-colors hover:bg-accent hover:text-foreground",
-                  active === it.id ? "bg-primary/10 font-medium text-foreground" : "text-muted-foreground",
-                )}
-              >
-                {it.label}
-              </a>
-            ))}
+      {/* Mobile: fixed overlay so it stays visible regardless of scroll position */}
+      {open && (
+        <div className="fixed inset-x-0 top-14 bottom-0 z-40 overflow-y-auto bg-background px-4 py-4 lg:hidden">
+          <div className="mb-4 border-b border-border pb-4">
+            {MAIN_NAV.map((item) => {
+              const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={close}
+                  className={cn(
+                    "block rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent hover:text-foreground",
+                    isActive ? "font-medium text-foreground" : "text-muted-foreground",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
-        ))}
+          {sectionLinks}
+        </div>
+      )}
+
+      {/* Desktop: normal inline sidebar */}
+      <nav className="hidden space-y-6 lg:block">
+        {sectionLinks}
       </nav>
     </>
   );

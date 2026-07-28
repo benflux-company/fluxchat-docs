@@ -115,7 +115,7 @@ export function SDKCommunityPage({ spec }: { spec: SDKSpec }) {
 
           <H2 id="api-reference">API reference</H2>
           <H3>Ask endpoint</H3>
-          <CodeBlock filename="ask.http" code={`POST https://dev-api.fluxchat-corp.com/api/v2/public/bot/ask
+          <CodeBlock filename="ask.http" code={`POST https://api.fluxchat-corp.com/api/v2/public/bot/ask
 Content-Type: application/json
 X-API-Key: fc_prod_your_key
 
@@ -136,7 +136,7 @@ X-API-Key: fc_prod_your_key
   }
 }`} />
           <H3>Test key</H3>
-          <CodeBlock filename="test-key.http" code={`GET https://dev-api.fluxchat-corp.com/api/v2/public/bot/test
+          <CodeBlock filename="test-key.http" code={`GET https://api.fluxchat-corp.com/api/v2/public/bot/test
 X-API-Key: fc_prod_your_key
 
 // Response

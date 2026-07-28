@@ -24,7 +24,7 @@ function P({ children }: Readonly<{ children: React.ReactNode }>) {
   return <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">{children}</p>;
 }
 function H3({ children, id }: Readonly<{ children: React.ReactNode; id?: string }>) {
-  return <h3 id={id} className="mt-7 text-lg font-semibold">{children}</h3>;
+  return <h3 id={id} className="mt-7 scroll-mt-20 text-lg font-semibold">{children}</h3>;
 }
 function Code({ children }: Readonly<{ children: React.ReactNode }>) {
   return <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12.5px] text-foreground">{children}</code>;
@@ -40,7 +40,35 @@ function V2Badge() {
   );
 }
 
-export default function DocsPage() {
+const SKIP_LOGINS = new Set(["claude", "github-actions", "dependabot", "dependabot[bot]", "github-actions[bot]"]);
+
+type Contributor = { login: string; avatar_url: string; html_url: string; contributions: number };
+
+async function getContributors(): Promise<Contributor[]> {
+  try {
+    const res = await fetch(
+      "https://api.github.com/repos/benflux-company/fluxchat-sdk/commits?per_page=100",
+      { next: { revalidate: 3600 }, headers: { Accept: "application/vnd.github+json" } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json() as { author: { login: string; avatar_url: string; html_url: string } | null }[];
+    const counts = new Map<string, Contributor>();
+    for (const c of data) {
+      if (!c.author) continue;
+      const { login, avatar_url, html_url } = c.author;
+      if (SKIP_LOGINS.has(login.toLowerCase())) continue;
+      const existing = counts.get(login);
+      if (existing) existing.contributions++;
+      else counts.set(login, { login, avatar_url, html_url, contributions: 1 });
+    }
+    return [...counts.values()].sort((a, b) => b.contributions - a.contributions);
+  } catch {
+    return [];
+  }
+}
+
+export default async function DocsPage() {
+  const contributors = await getContributors();
   return (
     <div className="mx-auto max-w-screen-xl px-4">
       <div className="grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
@@ -674,17 +702,17 @@ fluxchat kb crawl --url https://acme.com/sitemap.xml --sitemap --max-pages 20`} 
                     },
                     {
                       stack: "Dart / Flutter",
-                      status: "open",
-                      readme: "https://github.com/benflux-company/fluxchat-sdk/blob/main/sdk/flutter/README.md",
-                      issue: "https://github.com/benflux-company/fluxchat-sdk/issues/3",
-                      pkg: null,
+                      status: "available",
+                      readme: "https://github.com/benflux-company/fluxchat-sdk/blob/main/sdk/dart/README.md",
+                      issue: null,
+                      pkg: { label: "pub add", href: "https://pub.dev/packages/fluxchat_sdk" },
                     },
                     {
                       stack: "Go",
-                      status: "open",
+                      status: "available",
                       readme: "https://github.com/benflux-company/fluxchat-sdk/blob/main/sdk/go/README.md",
-                      issue: "https://github.com/benflux-company/fluxchat-sdk/issues/4",
-                      pkg: null,
+                      issue: null,
+                      pkg: { label: "go get", href: "https://github.com/benflux-company/fluxchat-sdk/releases/tag/sdk%2Fgo%2Fv1.0.4" },
                     },
                     {
                       stack: "C# / .NET",
@@ -982,7 +1010,7 @@ PATCH  /bot/config              { assistantName, tone, styleRules, strictMode }`
             <CodeBlock filename="sdk/python/fluxchat.py" code={`import httpx
 from dataclasses import dataclass
 
-BASE_URL = "https://dev-api.fluxchat-corp.com/api/v2"
+BASE_URL = "https://api.fluxchat-corp.com/api/v2"
 
 @dataclass
 class AskResponse:
@@ -1024,7 +1052,7 @@ import (
     "bytes"; "encoding/json"; "fmt"; "net/http"
 )
 
-const defaultBaseURL = "https://dev-api.fluxchat-corp.com/api/v2"
+const defaultBaseURL = "https://api.fluxchat-corp.com/api/v2"
 
 type Client struct { apiKey, baseURL string; http *http.Client }
 
@@ -1062,7 +1090,7 @@ class FluxChat {
   final String apiKey;
   final String baseUrl;
   FluxChat({required this.apiKey,
-            this.baseUrl = 'https://dev-api.fluxchat-corp.com/api/v2'});
+            this.baseUrl = 'https://api.fluxchat-corp.com/api/v2'});
 
   Future<Map<String, dynamic>> ask(String message,
       {String? context, String? conversationId}) async {
@@ -1251,27 +1279,19 @@ npm run typecheck`} />
             <H2 id="contributors">Contributors</H2>
             <P>People who built and maintain FluxChat. Want to join? Open an issue or submit a PR on <a className="text-primary" href="https://github.com/benflux-company/fluxchat-sdk" target="_blank" rel="noreferrer">GitHub</a>.</P>
             <div className="mt-6 flex flex-wrap gap-4">
-              {[
-                {
-                  login: "benbaruka",
-                  name: "Ben Baruka",
-                  role: "Creator & maintainer",
-                  github: "https://github.com/benbaruka",
-                  avatar: "https://github.com/benbaruka.png",
-                },
-              ].map((c) => (
+              {contributors.map((c) => (
                 <a
                   key={c.login}
-                  href={c.github}
+                  href={c.html_url}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-3 rounded-xl border border-border bg-muted/30 px-4 py-3 hover:bg-muted/60 transition-colors"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={c.avatar} alt={c.name} width={40} height={40} className="rounded-full" />
+                  <img src={c.avatar_url} alt={c.login} width={40} height={40} className="rounded-full" />
                   <div>
-                    <p className="text-sm font-semibold">{c.name}</p>
-                    <p className="text-[12px] text-muted-foreground">{c.role}</p>
+                    <p className="text-sm font-semibold">@{c.login}</p>
+                    <p className="text-[12px] text-muted-foreground">{c.contributions} commit{c.contributions > 1 ? "s" : ""}</p>
                   </div>
                 </a>
               ))}

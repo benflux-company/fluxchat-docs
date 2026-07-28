@@ -1,0 +1,41 @@
+replicaCount: 2
+image:
+  repository: ghcr.io/benflux-company/fluxchat-docs
+  tag: latest
+  pullPolicy: Always
+service:
+  port: 80
+  targetPort: 3000
+healthCheck:
+  path: /
+autoscaling:
+  enabled: false
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 384Mi
+env:
+  NODE_ENV: production
+  APP_ENV: production
+  PORT: "3000"
+  HOSTNAME: "0.0.0.0"
+resourceQuota:
+  # Same headroom lesson as propre-confiance-web/client-fluxchat: leave room
+  # for cert-manager's HTTP-01 solver pod + a rolling deploy's surge pod.
+  requestsCpu: 800m
+  requestsMemory: 768Mi
+  limitsCpu: "2"
+  limitsMemory: 1536Mi
+limitRange:
+  defaultRequestCpu: 50m
+  defaultRequestMemory: 128Mi
+  defaultLimitCpu: 250m
+  defaultLimitMemory: 384Mi
+ingress:
+  enabled: true
+  host: docs.fluxchat-corp.com
+network:
+  allowedIngressNamespaces: []

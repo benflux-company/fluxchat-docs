@@ -52,7 +52,35 @@ function Mock({ mode }: { mode: "light" | "dark" }) {
   );
 }
 
-export default function Home() {
+const SKIP_LOGINS = new Set(["claude", "github-actions", "dependabot", "dependabot[bot]", "github-actions[bot]"]);
+
+type Contributor = { login: string; avatar_url: string; html_url: string; contributions: number };
+
+async function getContributors(): Promise<Contributor[]> {
+  try {
+    const res = await fetch(
+      "https://api.github.com/repos/benflux-company/fluxchat-sdk/commits?per_page=100",
+      { next: { revalidate: 3600 }, headers: { Accept: "application/vnd.github+json" } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json() as { author: { login: string; avatar_url: string; html_url: string } | null }[];
+    const counts = new Map<string, Contributor>();
+    for (const c of data) {
+      if (!c.author) continue;
+      const { login, avatar_url, html_url } = c.author;
+      if (SKIP_LOGINS.has(login.toLowerCase())) continue;
+      const existing = counts.get(login);
+      if (existing) existing.contributions++;
+      else counts.set(login, { login, avatar_url, html_url, contributions: 1 });
+    }
+    return [...counts.values()].sort((a, b) => b.contributions - a.contributions);
+  } catch {
+    return [];
+  }
+}
+
+export default async function Home() {
+  const contributors = await getContributors();
   return (
     <main>
       {/* Hero */}
@@ -80,7 +108,7 @@ export default function Home() {
                 View on npm
               </a>
             </div>
-            <div className="mx-auto mt-8 flex max-w-md items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 font-mono text-sm">
+            <div className="mt-8 inline-flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 font-mono text-sm">
               <span className="text-primary">$</span> npm install @fluxchat_sdk/sdk
             </div>
           </Reveal>
@@ -172,13 +200,29 @@ export default function Home() {
               </div>
             </div>
           </Reveal>
-          <Reveal className="mt-8">
-            <a href="https://github.com/benbaruka" target="_blank" rel="noreferrer" className="inline-flex flex-col items-center gap-2">
-              <Image src="https://avatars.githubusercontent.com/u/89651828?v=4" alt="benbaruka" width={56} height={56} className="rounded-full border-2 border-border transition hover:border-primary" unoptimized />
-              <b className="text-sm">benbaruka</b>
-              <span className="text-xs text-muted-foreground">maintainer</span>
-            </a>
-          </Reveal>
+          {contributors.length > 0 && (
+            <Reveal className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 text-left">
+              {contributors.map((c) => (
+                <a
+                  key={c.login}
+                  href={c.html_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition hover:border-primary/50 hover:bg-accent/40"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={c.avatar_url} alt={c.login} width={40} height={40} className="rounded-full border border-border shrink-0" />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">@{c.login}</p>
+                    <p className="text-xs text-muted-foreground">{c.contributions} commit{c.contributions > 1 ? "s" : ""}</p>
+                  </div>
+                </a>
+              ))}
+            </Reveal>
+          )}
+          {contributors.length === 0 && (
+            <p className="mt-6 text-sm text-muted-foreground">Contributors loading…</p>
+          )}
         </div>
       </section>
 
