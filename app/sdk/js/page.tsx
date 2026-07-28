@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { CodeBlock } from "@/components/code-block";
 import { Footer } from "@/components/footer";
+import { SdkSidebar } from "@/components/sdk-sidebar";
 
 export const metadata: Metadata = { title: "JavaScript / TypeScript SDK — FluxChat" };
 
@@ -37,26 +37,28 @@ const NAV_ITEMS = [
   { id: "types", label: "TypeScript types" },
 ];
 
-export default function JsSDKPage() {
+async function getJsAuthor() {
+  try {
+    const res = await fetch(
+      "https://api.github.com/users/benbaruka",
+      { next: { revalidate: 3600 }, headers: { Accept: "application/vnd.github+json" } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json() as { login: string; avatar_url: string; html_url: string };
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export default async function JsSDKPage() {
+  const author = await getJsAuthor();
   return (
     <div className="mx-auto max-w-screen-xl px-4">
       <div className="grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
         {/* Sidebar */}
         <aside className="py-8 lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:overflow-y-auto lg:border-r lg:border-border lg:pr-4">
-          <Link href="/sdk" className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-            ← All SDKs
-          </Link>
-          <nav className="space-y-1">
-            {NAV_ITEMS.map((item) => (
-              <a
-                key={item.id}
-                href={`#${item.id}`}
-                className="block rounded-md px-2 py-1.5 text-[13.5px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                {item.label}
-              </a>
-            ))}
-          </nav>
+          <SdkSidebar navItems={NAV_ITEMS} />
         </aside>
 
         {/* Content */}
@@ -411,6 +413,34 @@ export interface FluxChatContext {
   org?:  { name?: string };
   [key: string]: unknown;
 }`} />
+
+          {/* ── Author ── */}
+          {author && (
+            <div className="mt-16 rounded-2xl border border-border bg-card p-6">
+              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">SDK Author</p>
+              <a
+                href={author.html_url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-4 transition hover:opacity-80"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={author.avatar_url}
+                  alt={author.login}
+                  width={56}
+                  height={56}
+                  className="rounded-full border-2 border-border"
+                />
+                <div>
+                  <p className="font-semibold">@{author.login}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Designed and built the official JavaScript / TypeScript SDK, CLI, and embeddable widget for FluxChat.
+                  </p>
+                </div>
+              </a>
+            </div>
+          )}
 
           <Footer />
         </article>
