@@ -124,7 +124,7 @@ export default async function DartSDKPage() {
           <H3>Core SDK (pure Dart)</H3>
           <CodeBlock filename="main.dart" code={`import 'package:fluxchat_sdk/fluxchat_sdk.dart';
 
-final fluxchat = FluxChat(apiKey: 'fc_live_your_key');
+final fluxchat = FluxChat(apiKey: 'fc_prod_your_key');
 
 final res = await fluxchat.ask(AskOptions(
   message: 'What are your opening hours?',
@@ -139,7 +139,7 @@ MaterialApp(
   // The FAB floats above every route automatically — zero per-screen setup.
   builder: FluxChatOverlay.builder(
     options: FluxChatOptions(
-      apiKey: 'fc_live_your_key',
+      apiKey: 'fc_prod_your_key',
       assistantName: 'Léa',
       clientName: 'Acme Bank',
     ),
@@ -185,7 +185,7 @@ print(res.conversationId); // save this for follow-up messages`} />
           </P>
           <CodeBlock filename="dart" code={`FluxChatOverlay.builder(
   options: FluxChatOptions(
-    apiKey: 'fc_live_your_key',
+    apiKey: 'fc_prod_your_key',
     assistantName: 'Léa',
     // Called before every message — always fresh
     contextBuilder: () => jsonEncode({
@@ -246,7 +246,7 @@ class MyApp extends StatelessWidget {
       title: 'My App',
       builder: FluxChatOverlay.builder(
         options: FluxChatOptions(
-          apiKey: 'fc_live_your_key',
+          apiKey: 'fc_prod_your_key',
           assistantName: 'Léa',
           clientName: 'Acme Bank',
           primaryColor: const Color(0xFF4F46E5),
@@ -271,7 +271,7 @@ Scaffold(
       const MyContent(),
       FluxChatFab(
         options: FluxChatOptions(
-          apiKey: 'fc_live_your_key',
+          apiKey: 'fc_prod_your_key',
           assistantName: 'Léa',
         ),
       ),
@@ -290,7 +290,7 @@ Scaffold(
 Navigator.push(context, MaterialPageRoute(
   builder: (_) => FluxChatPage(
     options: FluxChatOptions(
-      apiKey: 'fc_live_your_key',
+      apiKey: 'fc_prod_your_key',
       assistantName: 'Léa',
       clientName: 'Acme Bank',
     ),
@@ -310,7 +310,7 @@ final controller = FluxChatController();
 
 // Inject into the widget
 FluxChatOverlay.builder(
-  options: FluxChatOptions(apiKey: 'fc_live_your_key'),
+  options: FluxChatOptions(apiKey: 'fc_prod_your_key'),
   controller: controller,
 )
 
@@ -336,7 +336,7 @@ void dispose() {
             Full CRUD for knowledge articles. Requires a <Code>jwtToken</Code> in the client.
           </P>
           <CodeBlock filename="dart" code={`final client = FluxChat(
-  apiKey: 'fc_live_your_key',
+  apiKey: 'fc_prod_your_key',
   jwtToken: 'eyJhbGci...',
 );
 
