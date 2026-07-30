@@ -119,7 +119,7 @@ export default function App() {
             Pass a <Code>quickReplies</Code> array to show tap-to-send chips below the greeting message when the panel first opens. Each chip sends that exact text as the user&apos;s first message and then disappears.
           </P>
           <CodeBlock filename="init.js" code={`FluxChatWidget.init({
-  apiKey: 'fc_live_xxx',
+  apiKey: 'fc_prod_xxx',
   greeting: 'Bonjour ! Comment puis-je vous aider ?',
   quickReplies: [
     'What can you do?',
@@ -145,7 +145,7 @@ export default function App() {
           <CodeBlock filename="any-site.html" code={`<!-- That's it. autoCapture is true by default. -->
 <script src="https://cdn.jsdelivr.net/npm/@fluxchat_sdk/sdk/dist/widget.global.js"></script>
 <script>
-  FluxChatWidget.init({ apiKey: 'fc_live_xxx' });
+  FluxChatWidget.init({ apiKey: 'fc_prod_xxx' });
 </script>
 
 <!-- What gets captured automatically (v0.1.7+):
@@ -195,7 +195,7 @@ Bot answers from permanent KB — even after 1h session TTL expires`} />
             The widget can query your platform&apos;s REST API in real time to answer questions that require fresh data (orders, events, products, sermons, etc.).
           </P>
           <CodeBlock filename="init.js" code={`FluxChatWidget.init({
-  apiKey: 'fc_live_xxx',
+  apiKey: 'fc_prod_xxx',
   platformApi: {
     baseUrl: 'https://api.my-app.com',
     // authTokenKeys: ['member_token', 'admin_token'] // optional override

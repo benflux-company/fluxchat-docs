@@ -773,21 +773,35 @@ fluxchat kb crawl --url https://acme.com/sitemap.xml --sitemap --max-pages 20`} 
             {/* ── Sandbox ─────────────────────────────────── */}
             <H2 id="sandbox">Developer Sandbox</H2>
             <P>
-              The sandbox is a real FluxChat organization reserved for contributors.
-              It has an active 1-year subscription — all features unlocked, no rate limit surprises.
-              Use it to test your SDK against the live API without creating your own account.
+              The sandbox is a real FluxChat organization reserved for contributors, running on the
+              <b> Free plan</b> — 100 messages/month, enough to exercise every endpoint and verify your
+              SDK end-to-end. Use it to test against a live API without creating your own account or
+              subscribing to anything.
             </P>
+            <Callout>
+              This is a <b>dev/sandbox environment</b>, separate from production. If you&apos;re integrating
+              against your own FluxChat organization in production, use <Code>https://api.fluxchat-corp.com/api/v2</Code> instead
+              — see the SDK reference sections above.
+            </Callout>
 
             <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/30">
               <p className="mb-3 text-sm font-semibold text-amber-800 dark:text-amber-300">Sandbox credentials — public, do not use for production</p>
               <div className="grid gap-2 text-sm font-mono">
-                <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">Dashboard</span><a className="text-primary hover:underline break-all" href="https://fluxchat-corp.com" target="_blank" rel="noreferrer">https://fluxchat-corp.com</a></div>
+                <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">Dashboard</span><a className="text-primary hover:underline break-all" href="https://dev.fluxchat-corp.com" target="_blank" rel="noreferrer">https://dev.fluxchat-corp.com</a></div>
                 <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">Login</span><span className="break-all select-all">heyakaf832@ocuser.com</span></div>
                 <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">Password</span><span className="select-all">Test1234567890@</span></div>
                 <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">Org ID</span><span className="break-all select-all">ba134db3-993d-4076-8431-bb2c922d4db2</span></div>
                 <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">API Key</span><span className="break-all select-all text-xs">fc_prod_f45868df738ddbec537c6c929570f1dad830fb0ca0cd5f82652e9eb7db4ede16</span></div>
                 <div className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">Base URL</span><span className="break-all select-all">https://dev-api.fluxchat-corp.com/api/v2</span></div>
               </div>
+              <p className="mt-3 text-xs text-amber-700 dark:text-amber-400">
+                Note: the key is prefixed <Code>fc_prod_</Code> for historical reasons — it is a dev/sandbox key, not a production one. Don&apos;t let the prefix mislead you.
+              </p>
+              <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
+                Note: normal FluxChat dashboards log in via single sign-on (SSO) — there is no email/password form on the main login screen.
+                This sandbox account is an exception: it authenticates through the legacy email/password fallback at{' '}
+                <a className="underline" href="https://dev.fluxchat-corp.com/login/legacy" target="_blank" rel="noreferrer">/login/legacy</a>, kept specifically so this sandbox works without creating a real SSO identity.
+              </p>
             </div>
 
             <Callout>The sandbox is shared — do not store personal data in it. Reset the KB anytime from the dashboard: <b>Bot → Knowledge base → Delete all</b>.</Callout>
@@ -838,7 +852,7 @@ X-API-Key: fc_prod_f45868df738ddbec537c6c929570f1dad830fb0ca0cd5f82652e9eb7db4ed
             <H3>Step 3 — Confirm in the dashboard</H3>
             <P>For a definitive proof, log in to the dashboard and check the knowledge base directly.</P>
             <div className="mt-3 rounded-xl border border-border bg-muted/30 p-4 text-sm space-y-2">
-              <p><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground mr-2">1</span>Go to <a className="text-primary hover:underline font-medium" href="https://fluxchat-corp.com" target="_blank" rel="noreferrer">fluxchat-corp.com</a> and log in with the sandbox credentials above.</p>
+              <p><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground mr-2">1</span>Go to <a className="text-primary hover:underline font-medium" href="https://dev.fluxchat-corp.com" target="_blank" rel="noreferrer">dev.fluxchat-corp.com</a> and log in with the sandbox credentials above.</p>
               <p><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground mr-2">2</span>In the left sidebar, click <b>Bot</b> then <b>Base de connaissances</b>.</p>
               <p><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground mr-2">3</span>You should see an entry titled <b>"About FluxTest"</b> with the extracted content. If it appears — the full pipeline worked.</p>
               <p><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground mr-2">4</span>If the entry is NOT there after 30 seconds, the extraction failed. Check that <Code>content</Code> was not empty and was under 6000 characters.</p>
@@ -873,7 +887,11 @@ POST /public/bot/ask
 204 but entry missing from KB → content was too short or had no extractable facts (min ~50 words recommended)`} />
 
             <H3 id="api-reference">REST API — base URL</H3>
-            <P>Base URL: <Code>https://dev-api.fluxchat-corp.com/api/v2</Code>. All public endpoints require <Code>X-API-Key: fc_prod_your_key</Code> in the request header.</P>
+            <P>
+              Sandbox/dev base URL: <Code>https://dev-api.fluxchat-corp.com/api/v2</Code> (used throughout this page).
+              Production base URL: <Code>https://api.fluxchat-corp.com/api/v2</Code> — use this one for your own organization.
+              All public endpoints require <Code>X-API-Key: fc_prod_your_key</Code> in the request header regardless of environment.
+            </P>
             <CodeBlock filename="ask.http" code={`POST /public/bot/ask
 Content-Type: application/json
 X-API-Key: fc_prod_your_key
