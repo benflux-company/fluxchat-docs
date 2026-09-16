@@ -58,9 +58,23 @@ type Contributor = { login: string; avatar_url: string; html_url: string; contri
 
 async function getContributors(): Promise<Contributor[]> {
   try {
+    // Unauthenticated GitHub API calls are capped at 60 req/hour per source
+    // IP — easily exhausted by a server rendering this page repeatedly
+    // (ISR revalidate aside, that's still shared across every build/preview
+    // hitting the same egress IP), which silently left this section stuck
+    // on "Contributors loading…" forever. GITHUB_TOKEN (a classic PAT with
+    // just public_repo/no scopes needed for a public repo) raises the cap
+    // to 5000/hour if set; falls back to unauthenticated if absent.
+    const token = process.env.GITHUB_TOKEN;
     const res = await fetch(
       "https://api.github.com/repos/benflux-company/fluxchat-sdk/commits?per_page=100",
-      { next: { revalidate: 3600 }, headers: { Accept: "application/vnd.github+json" } }
+      {
+        next: { revalidate: 3600 },
+        headers: {
+          Accept: "application/vnd.github+json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      }
     );
     if (!res.ok) return [];
     const data = await res.json() as { author: { login: string; avatar_url: string; html_url: string } | null }[];
@@ -221,7 +235,13 @@ export default async function Home() {
             </Reveal>
           )}
           {contributors.length === 0 && (
-            <p className="mt-6 text-sm text-muted-foreground">Contributors loading…</p>
+            <p className="mt-6 text-sm text-muted-foreground">
+              Contributors unavailable right now —{" "}
+              <a href="https://github.com/benflux-company/fluxchat-sdk/graphs/contributors" target="_blank" rel="noreferrer" className="underline hover:text-foreground">
+                see them on GitHub
+              </a>
+              .
+            </p>
           )}
         </div>
       </section>
