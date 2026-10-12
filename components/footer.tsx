@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Zap } from "lucide-react";
+import { FluxChatSymbol } from "@/components/FluxChatLogo";
 
 export function Footer() {
   return (
@@ -8,9 +8,7 @@ export function Footer() {
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
             <Link href="/" className="flex items-center gap-2 font-semibold text-foreground">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary">
-                <Zap className="h-3.5 w-3.5 text-primary-foreground" />
-              </span>
+              <FluxChatSymbol className="h-6 w-6" />
               fluxchat<span className="text-muted-foreground">/</span>sdk
             </Link>
             <span className="text-xs text-muted-foreground">A product by Benflux · MIT Licensed</span>
