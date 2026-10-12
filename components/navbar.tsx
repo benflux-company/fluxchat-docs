@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap, Github, Search, Command, LayoutDashboard, Menu, X } from "lucide-react";
+import { Github, Search, Command, LayoutDashboard, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useMobileSidebar } from "@/components/mobile-sidebar-context";
 import { SearchModal } from "@/components/search-modal";
+import { FluxChatSymbol } from "@/components/FluxChatLogo";
 
 const NAV = [
   { href: "/", label: "Overview" },
@@ -44,9 +45,7 @@ export function Navbar() {
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-14 max-w-screen-xl items-center gap-4 px-4">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary">
-              <Zap className="h-3.5 w-3.5 text-primary-foreground" />
-            </span>
+            <FluxChatSymbol className="h-6 w-6" />
             <span>
               fluxchat<span className="text-muted-foreground">/</span>sdk
             </span>
