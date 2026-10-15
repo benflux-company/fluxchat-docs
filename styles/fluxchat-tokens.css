@@ -1,0 +1,52 @@
+/* FluxChat — tokens de marque (charte graphique v1.1, octobre 2026)
+   Benflux Corporation · logo piste C « Échange »
+
+   Source canonique : dossier projet FluxChat, fichier
+   fluxchat/identite/tokens/fluxchat-tokens.css (charte graphique, section 10).
+   Copie vendue dans ce dépôt — client-fluxchat, fluxchat-admin et fluxchat-docs
+   portent chacun la même copie. Toute modification de valeur doit être
+   répercutée dans les trois dépôts. */
+:root {
+  /* Marque */
+  --fc-cyan: #00C2FF;          /* haut du dégradé, accents lumineux */
+  --fc-blue: #0099FF;          /* Bleu Flux : couleur primaire (aplats, icônes, grands titres) */
+  --fc-blue-action: #0077CC;   /* liens et boutons avec texte blanc (contraste 4,7:1 sur blanc) */
+  --fc-blue-action-hover: #0066B3;
+  --fc-navy: #0F172A;          /* Marine Benflux : texte, fonds sombres */
+  --fc-gradient: linear-gradient(180deg, #00C2FF 0%, #0099FF 100%);
+
+  /* Neutres (ardoise, teinte bleutée) */
+  --fc-gray-50: #F5F8FC;
+  --fc-gray-100: #EAF0F7;
+  --fc-gray-200: #DCE4EF;
+  --fc-gray-400: #94A3B8;
+  --fc-gray-500: #64748B;      /* texte secondaire (4,8:1 sur blanc) */
+  --fc-gray-700: #334155;
+  --fc-white: #FFFFFF;
+
+  /* Sombre */
+  --fc-night-900: #0B1220;
+  --fc-night-800: #111A2E;
+  --fc-night-700: #1B2740;
+
+  /* États */
+  --fc-online: #22C55E;
+  --fc-success: #16A34A;
+  --fc-warning: #F59E0B;
+  --fc-danger: #EF4444;
+  --fc-ai: #7DD3FC;            /* marqueur des réponses du bot IA */
+
+  /* Typographie */
+  --fc-font-display: "Inter Display", "Inter", system-ui, sans-serif;
+  --fc-font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fc-font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --fc-font-doc: Calibri, Carlito, "Segoe UI", sans-serif; /* documents Word/PDF Benflux */
+
+  /* Formes (dérivées du symbole) */
+  --fc-radius-sm: 6px;
+  --fc-radius-md: 10px;
+  --fc-radius-lg: 16px;
+  --fc-radius-bubble: 18px;    /* bulle : 3 coins à 18px, coin côté émetteur à 6px */
+  --fc-radius-full: 999px;
+  --fc-shadow-launcher: 0 6px 18px rgba(0, 153, 255, .35);
+}

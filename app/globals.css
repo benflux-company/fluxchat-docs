@@ -1,3 +1,4 @@
+@import "../styles/fluxchat-tokens.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,7 +11,9 @@
     --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
-    --primary: 204 100% 50%;
+    --primary: 204 100% 50%; /* = var(--fc-blue) #0099FF; kept as an HSL triplet
+      because shadcn's hsl(var(--primary)) convention needs H/S/L components,
+      which a hex custom property can't supply directly */
     --primary-foreground: 0 0% 100%;
     --secondary: 220 14.3% 95.9%;
     --secondary-foreground: 220.9 39.3% 11%;
@@ -20,10 +23,12 @@
     --accent-foreground: 220.9 39.3% 11%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 204 100% 50%;
+    --ring: 204 100% 50%; /* = var(--fc-blue), see --primary above */
     --radius: 0.5rem;
-    --font-sans: "Inter", system-ui, sans-serif;
-    --font-mono: "JetBrains Mono", monospace;
+    --radius-bubble: var(--fc-radius-bubble);
+    --font-sans: var(--fc-font-sans);
+    --font-display: var(--fc-font-display);
+    --font-mono: var(--fc-font-mono);
   }
 
   .dark {
