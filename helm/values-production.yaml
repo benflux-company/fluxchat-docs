@@ -1,7 +1,7 @@
 replicaCount: 2
 image:
   repository: ghcr.io/benflux-company/fluxchat-docs
-  tag: 74b4bdb4ac95bcf47cfc68b9165be8cd9908007d
+  tag: a99403fa1f91167427b5b0a2ee01da2220aee8aa
   pullPolicy: Always
 service:
   port: 80
