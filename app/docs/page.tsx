@@ -140,6 +140,32 @@ const { reply } = await fluxchat.ask({
   context: \`Plan: \${user.plan}. Open tickets: \${tickets.length}.\`,
 });`} />
 
+            <H2 id="handoff">Human handoff<V2Badge /></H2>
+            <P>When the bot can&apos;t help, hand the visitor to a human — and keep the conversation in the <b>same thread</b>. The widget does it on its own; the SDKs expose the same three calls if you build your own UI.</P>
+            <CodeBlock filename="handoff.ts" code={`// 1. Create the ticket. Pass the same sessionId you use with ask() and
+//    everything the bot already said is copied into it, so the agent picks
+//    up mid-conversation instead of reading one decontextualised sentence.
+const { ticketId } = await fluxchat.support.escalate({
+  name: 'Jordan Mbeki',
+  email: 'jordan@example.com',
+  message: 'My transfer has been stuck since yesterday.',
+  sessionId,
+});
+
+// 2. Poll the thread — roles are bot | visitor | agent.
+const thread = await fluxchat.support.thread(ticketId, 'jordan@example.com');
+if (thread.agentConnected) console.log(\`\${thread.agentName} is answering\`);
+
+// 3. The visitor replies into the same ticket.
+await fluxchat.support.reply({ ticketId, email: 'jordan@example.com', content: 'Ref 4821.' });`} />
+            <ul className="mt-4 list-disc space-y-1.5 pl-5 text-[15px] text-muted-foreground">
+              <li><b>No account, no token</b> — the e-mail the visitor escalated with is what proves the ticket is theirs. A wrong e-mail and a missing ticket both return <Code>404</Code>, so a guessed id reveals nothing.</li>
+              <li><b>Polled, not pushed</b> — 5s is the widget&apos;s cadence; limits are 60 reads/min, 30 replies/min, 5 escalations/min.</li>
+              <li><b>The agent answers from your dashboard</b> — <Code>open</Code> → <Code>in_progress</Code> → <Code>resolved</Code> → <Code>closed</Code>. A visitor replying to a resolved ticket reopens it; a closed one refuses the write.</li>
+              <li><b>The visitor is also e-mailed</b> when an agent replies, so they can close the tab.</li>
+              <li>Requires a plan with <Code>supportTickets</Code>.</li>
+            </ul>
+
             <H2 id="assistant">FluxChat AI assistant</H2>
             <P>Use the same kit as a general assistant: a persona you control, grounded on your knowledge base, with continuity when you pass a <Code>conversationId</Code>.</P>
             <ul className="mt-4 list-disc space-y-1.5 pl-5 text-[15px] text-muted-foreground">

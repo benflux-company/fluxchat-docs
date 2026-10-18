@@ -15,6 +15,7 @@ export const SEARCH_DATA: SearchItem[] = [
   { id: "install", title: "Installation", description: "npm install @fluxchat_sdk/sdk — works with npm, pnpm, yarn.", section: "Getting started", href: "/docs#install" },
   { id: "quickstart", title: "Quickstart", description: "Get your API key, send your first message, add the widget.", section: "Getting started", href: "/docs#quickstart" },
   { id: "support", title: "In-app support", description: "Embed a full support experience in your product with knowledge base and context.", section: "Use cases", href: "/docs#support" },
+  { id: "handoff", title: "Human handoff", description: "Hand a visitor to a real agent and keep the conversation in the same thread: ticket, polling, agent replies, no account needed.", section: "Use cases", href: "/docs#handoff" },
   { id: "assistant", title: "AI assistant", description: "FluxChat AI assistant — persona, answers, custom knowledge.", section: "Use cases", href: "/docs#assistant" },
   { id: "widget", title: "Widget overview", description: "Embeddable chat widget for any website or app. Floating and inline modes.", section: "Widget", href: "/docs#widget" },
   { id: "quick-replies", title: "Quick replies", description: "Greeting chip row — tap-to-send chips for common questions.", section: "Widget", href: "/docs#quick-replies" },

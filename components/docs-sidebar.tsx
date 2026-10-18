@@ -21,6 +21,7 @@ export const SIDEBAR: { group: string; items: { id: string; label: string }[] }[
   ] },
   { group: "Use cases", items: [
     { id: "support", label: "In-app support" },
+    { id: "handoff", label: "Human handoff" },
     { id: "assistant", label: "AI assistant" },
   ] },
   { group: "Widget", items: [
