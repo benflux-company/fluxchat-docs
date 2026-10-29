@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { CodeBlock } from "@/components/code-block";
 import { Footer } from "@/components/footer";
 import { Github } from "lucide-react";
