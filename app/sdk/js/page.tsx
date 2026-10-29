@@ -117,10 +117,10 @@ export default function App() {
           <P>
             From v0.1.5, the widget passively captures every page the user visits. From <strong>v0.1.7</strong>, it also intercepts all <Code>fetch()</Code> and <Code>XMLHttpRequest</Code> GET responses (JSON only) and snapshots <Code>localStorage</Code> — giving the bot full awareness of your app's live data with zero configuration.
           </P>
-          <CodeBlock filename="any-site.html" code={`<!-- That's it. autoCapture is true by default. -->
+          <CodeBlock filename="any-site.html" code={`<!-- autoCapture is opt-in (default false) — pass it explicitly. -->
 <script src="https://cdn.jsdelivr.net/npm/@fluxchat_sdk/sdk/dist/widget.global.js"></script>
 <script>
-  FluxChatWidget.init({ apiKey: 'fc_prod_xxx' });
+  FluxChatWidget.init({ apiKey: 'fc_prod_xxx', autoCapture: true });
 </script>
 
 <!-- What gets captured automatically (v0.1.7+):
@@ -138,7 +138,7 @@ export default function App() {
             Auto-filtered: auth endpoints (<Code>/login</Code>, <Code>/token</Code>, <Code>/refresh</Code>), static assets, images, and binary responses are never captured.
           </P>
           <P>
-            Set <Code>autoCapture: false</Code> only if you populate the knowledge base manually (admin import or crawl).
+            Off by default (<Code>autoCapture: false</Code>) — it reads <Code>localStorage</Code> and intercepts the host page&apos;s own <Code>fetch</Code>/<Code>XHR</Code> calls, a meaningful amount of passive access to grant on every install. Pass <Code>autoCapture: true</Code> to opt in.
           </P>
 
           <H2 id="autokb">Auto-KB learning — permanent knowledge from captures</H2>
@@ -320,7 +320,7 @@ const { organizationId, scopes } = await client.testKey();`} />
                   ["greeting", "string", "auto", "First message shown to user."],
                   ["context", "string", "—", "Static context sent with every message."],
                   ["autoContext", "boolean", "true", "Auto-inject page title, URL, DOM text and window.fluxchatContext into every message."],
-                  ["autoCapture", "boolean", "true", "Passively capture every page visited — bot learns your entire site automatically."],
+                  ["autoCapture", "boolean", "false", "Passively capture every page visited — bot learns your entire site automatically. Opt-in: reads localStorage and intercepts fetch/XHR."],
                   ["platformApi", "{ baseUrl: string, allowedPaths?: string[] }", "—", "Your REST API base URL. Widget auto-queries matching endpoints per message for live data. allowedPaths scopes this to an explicit, visitor-safe subset."],
                   ["openOnLoad", "boolean", "false", "Open the panel automatically."],
                 ].map(([prop, type, def, desc]) => (
