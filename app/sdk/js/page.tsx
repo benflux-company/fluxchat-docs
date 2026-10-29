@@ -26,7 +26,6 @@ const NAV_ITEMS = [
   { id: "install", label: "Installation" },
   { id: "quickstart", label: "Quickstart" },
   { id: "widget", label: "Widget (browser)" },
-  { id: "quickreplies", label: "Quick replies" },
   { id: "autocapture", label: "autoCapture" },
   { id: "autokb", label: "Auto-KB learning" },
   { id: "platformapi", label: "platformApi (live data)" },
@@ -86,9 +85,9 @@ pnpm add @fluxchat_sdk/sdk`} />
 
           <H2 id="quickstart">Quickstart</H2>
           <H3>Headless — ask() only</H3>
-          <CodeBlock filename="chat.ts" code={`import { FluxChatClient } from '@fluxchat_sdk/sdk';
+          <CodeBlock filename="chat.ts" code={`import { FluxChat } from '@fluxchat_sdk/sdk';
 
-const client = new FluxChatClient({
+const client = new FluxChat({
   apiKey: process.env.FLUXCHAT_API_KEY!,
 });
 
@@ -103,7 +102,7 @@ console.log(reply);`} />
           <P>
             Drop <Code>FluxChatWidget</Code> anywhere in your React tree. It renders a floating chat bubble with no additional configuration.
           </P>
-          <CodeBlock filename="App.tsx" code={`import { FluxChatWidget } from '@fluxchat_sdk/sdk';
+          <CodeBlock filename="App.tsx" code={`import { FluxChatWidget } from '@fluxchat_sdk/sdk/react';
 
 export default function App() {
   return (
@@ -113,30 +112,6 @@ export default function App() {
     </>
   );
 }`} />
-
-          <H2 id="quickreplies">Quick replies — greeting chip row</H2>
-          <P>
-            Pass a <Code>quickReplies</Code> array to show tap-to-send chips below the greeting message when the panel first opens. Each chip sends that exact text as the user&apos;s first message and then disappears.
-          </P>
-          <CodeBlock filename="init.js" code={`FluxChatWidget.init({
-  apiKey: 'fc_prod_xxx',
-  greeting: 'Bonjour ! Comment puis-je vous aider ?',
-  quickReplies: [
-    'What can you do?',
-    'Show me pricing',
-    'I need support',
-  ],
-});
-
-// React component:
-<FluxChatWidget
-  apiKey={process.env.NEXT_PUBLIC_FLUXCHAT_API_KEY!}
-  greeting="Hello! How can I help?"
-  quickReplies={['What can you do?', 'Show me pricing', 'Contact sales']}
-/>`} />
-          <P>
-            Chips are horizontally scrollable on mobile, styled with your <Code>primaryColor</Code>, and removed permanently as soon as the user sends any message (whether via a chip or by typing).
-          </P>
 
           <H2 id="autocapture">autoCapture — zero-config site intelligence</H2>
           <P>
@@ -199,6 +174,7 @@ Bot answers from permanent KB — even after 1h session TTL expires`} />
   platformApi: {
     baseUrl: 'https://api.my-app.com',
     // authTokenKeys: ['member_token', 'admin_token'] // optional override
+    allowedPaths: ['/api/events', '/api/products'], // recommended — scope to visitor-safe endpoints
   },
 });
 // The widget fetches your OpenAPI/Swagger spec once, scores every GET endpoint
@@ -206,7 +182,7 @@ Bot answers from permanent KB — even after 1h session TTL expires`} />
 // into context before sending to FluxChat.
 // The user's auth token is read from localStorage automatically.`} />
           <P>
-            No manual intent/action setup. No configuration beyond the base URL. If your API has an OpenAPI spec (<Code>/openapi.json</Code>, <Code>/swagger.json</Code>, or <Code>/api-docs</Code>), the bot uses it automatically.
+            No manual intent/action setup beyond the base URL. If your API has an OpenAPI spec (<Code>/openapi.json</Code>, <Code>/swagger.json</Code>, or <Code>/api-docs</Code>), the bot uses it automatically. Endpoints that look admin/internal are skipped by default, but set <Code>allowedPaths</Code> to scope enrichment to an explicit, visitor-safe subset — its response is forwarded to FluxChat, so treat it like any other data leaving your system.
           </P>
 
           <H2 id="context">User context injection</H2>
@@ -275,7 +251,7 @@ export function FluxChatContextInjector() {
 
           <H2 id="frameworks">Framework setup</H2>
           <H3>Next.js (App Router)</H3>
-          <CodeBlock filename="app/layout.tsx" code={`import { FluxChatWidget } from '@fluxchat_sdk/sdk';
+          <CodeBlock filename="app/layout.tsx" code={`import { FluxChatWidget } from '@fluxchat_sdk/sdk/react';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -292,7 +268,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CodeBlock filename="src/main.tsx" code={`import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { FluxChatWidget } from '@fluxchat_sdk/sdk';
+import { FluxChatWidget } from '@fluxchat_sdk/sdk/react';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -302,20 +278,20 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 );`} />
 
           <H3>Plain HTML (CDN)</H3>
-          <CodeBlock filename="index.html" code={`<script src="https://cdn.jsdelivr.net/npm/@fluxchat_sdk/sdk/dist/widget.umd.js"></script>
+          <CodeBlock filename="index.html" code={`<script src="https://cdn.jsdelivr.net/npm/@fluxchat_sdk/sdk/dist/widget.global.js"></script>
 <script>
-  FluxChat.init({ apiKey: 'fc_prod_your_key' });
+  FluxChatWidget.init({ apiKey: 'fc_prod_your_key' });
 </script>`} />
 
           <H2 id="api">API reference</H2>
-          <H3>FluxChatClient</H3>
-          <CodeBlock filename="client.ts" code={`const client = new FluxChatClient({ apiKey: 'fc_prod_...' });
+          <H3>FluxChat</H3>
+          <CodeBlock filename="client.ts" code={`const client = new FluxChat({ apiKey: 'fc_prod_...' });
 
 // Send a message
 const { reply, conversationId } = await client.ask({
   message: 'Hello',
-  context?: string,          // optional — user/page context
-  conversationId?: string,   // optional — omit for stateless
+  context: 'User: Alice, Plan: Pro',  // optional — user/page context
+  conversationId: undefined,          // optional — omit for stateless
 });
 
 // Verify the key
@@ -345,8 +321,7 @@ const { organizationId, scopes } = await client.testKey();`} />
                   ["context", "string", "—", "Static context sent with every message."],
                   ["autoContext", "boolean", "true", "Auto-inject page title, URL, DOM text and window.fluxchatContext into every message."],
                   ["autoCapture", "boolean", "true", "Passively capture every page visited — bot learns your entire site automatically."],
-                  ["platformApi", "{ baseUrl: string }", "—", "Your REST API base URL. Widget auto-queries relevant endpoints per message for live data."],
-                  ["quickReplies", "string[]", "[]", "Tap-to-send chip row shown below the greeting. Chips disappear after the first user message. E.g. ['What can you do?', 'Show me pricing']."],
+                  ["platformApi", "{ baseUrl: string, allowedPaths?: string[] }", "—", "Your REST API base URL. Widget auto-queries matching endpoints per message for live data. allowedPaths scopes this to an explicit, visitor-safe subset."],
                   ["openOnLoad", "boolean", "false", "Open the panel automatically."],
                 ].map(([prop, type, def, desc]) => (
                   <tr key={prop} className="border-t border-border">
@@ -376,7 +351,7 @@ const article = await client.knowledge.create({
 await client.knowledge.update(article.id, { content: 'New content' });
 
 // Delete
-await client.knowledge.delete(article.id);
+await client.knowledge.remove(article.id);
 
 // List all (requires admin JWT)
 const articles = await client.knowledge.list();
